@@ -4,3 +4,5 @@ pub mod datas;
 pub mod dump;
 pub mod parse;
 
+#[cfg(test)]
+mod tests;
