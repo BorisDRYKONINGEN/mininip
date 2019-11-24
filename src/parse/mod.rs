@@ -26,6 +26,10 @@ pub fn parse_str(content: &str) -> Result<String, ()> {
     for i in TokenIterator::from(content.chars()) {
         let escape = match i {
             Token::Char(c) => {
+                if FORBIDDEN.contains(&c) {
+                    return Err(());
+                }
+
                 new.push(c);
                 continue;
             },

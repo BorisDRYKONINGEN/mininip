@@ -88,3 +88,17 @@ fn parse_str_unfinished_escape() {
 
     assert_eq!(parse_str(message), Err(()));
 }
+
+#[test]
+fn parse_str_forbidden_ascii() {
+    let message = r"hello=world";
+
+    assert_eq!(parse_str(message), Err(()));
+}
+
+#[test]
+fn parse_str_forbidden_unicode() {
+    let message = "☺";
+
+    assert_eq!(parse_str(message), Err(()));
+}
