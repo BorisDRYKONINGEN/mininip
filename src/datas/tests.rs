@@ -31,3 +31,18 @@ fn value_dump() {
 
     assert_eq!(dumped, "'tr\\x0000e8s_content\\=\\x00263a \\; the symbol of hapiness'");
 }
+
+#[test]
+fn value_parse_ok() -> Result<(), ()> {
+    let val = Value::parse_str(r"Hello \x002665")?;
+
+    assert_eq!(val, Value::Str(String::from("Hello \u{2665}")));
+    Ok(())
+}
+
+#[test]
+fn value_parse_err() {
+    let val = Value::parse_str(r"Hello \p");
+
+    assert!(val.is_err());
+}

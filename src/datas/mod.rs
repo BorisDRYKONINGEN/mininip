@@ -1,9 +1,10 @@
 //! The basic datas definitions like `Section` (what a section is) and `State` (the state of a INI script)
 
 use std::fmt::{self, Display, Formatter};
+use crate::{parse, dump};
 
 /// The value of a INI variable. May be edited in the future to add new types
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Str(String),
 }
@@ -29,6 +30,16 @@ impl Default for Value {
 }
 
 impl Value {
+    /// Builds a new `Value` from `content`, an INI-formatted string
+    /// 
+    /// # Return value
+    /// `Ok(value)` with `value` as the new object. Note that `value` will always be a `Value::Str` when calling this method
+    /// 
+    /// `Err(())` when an error occurs while parsing content
+    pub fn parse_str(content: &str) -> Result<Value, ()> {
+        Ok(Value::Str(parse::parse_str(content)?))
+    }
+
     /// Formats `self` to be dumped in the INI file
     /// 
     /// # Return value
@@ -51,7 +62,7 @@ impl Value {
     /// ```
     pub fn dump(&self) -> String {
         match self {
-            Value::Str(string) => format!("'{}'", crate::dump::dump_str(&string)),
+            Value::Str(string) => format!("'{}'", dump::dump_str(&string)),
         }
     }
 }
