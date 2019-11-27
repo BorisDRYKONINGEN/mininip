@@ -85,7 +85,6 @@ enum Token {
 /// 
 /// If an escape sequence is left unfinished, it is returned as is in a `Token::Escape` object, even though it is invalid
 struct TokenIterator<T> {
-    escape_seq: String,
     iterator: Fuse<T>,
 }
 
@@ -93,7 +92,6 @@ impl<T: Iterator> From<T> for TokenIterator<T> {
     fn from(iterator: T) -> TokenIterator<T> {
         TokenIterator {
             iterator: iterator.fuse(),
-            escape_seq: String::with_capacity(8),
         }
     }
 }
@@ -102,35 +100,31 @@ impl<T: Iterator<Item = char>> Iterator for TokenIterator<T> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Token> {
+        let mut escape_seq = String::with_capacity(8);
+
         loop {
             let i = match self.iterator.next() {
                 Some(val) => val,
 
                 // When the iterator returns `None`, we return the escape sequence if unfinished or `None` if the text was not escaped
-                None if self.escape_seq.is_empty() => return None,
-                None => {
-                    let mut buf = String::new();
-                    std::mem::swap(&mut buf, &mut self.escape_seq);
-                    return Some(Token::Escape(buf));
-                },
+                None if escape_seq.is_empty() => return None,
+                None                          => return Some(Token::Escape(escape_seq)),
             };
 
-            if !self.escape_seq.is_empty() {
-                self.escape_seq.push(i);
+            if !escape_seq.is_empty() {
+                escape_seq.push(i);
             } else if i == '\\' {
-                self.escape_seq.push(i);
+                escape_seq.push(i);
                 continue;
             } else {
                 return Some(Token::Char(i));
             }
 
-            if self.escape_seq.starts_with(r"\x") && self.escape_seq.len() < 8 {
+            if escape_seq.starts_with(r"\x") && escape_seq.len() < 8 {
                 continue;
             }
 
-            let mut buf = String::with_capacity(8);
-            std::mem::swap(&mut buf, &mut self.escape_seq);
-            return Some(Token::Escape(buf));
+            return Some(Token::Escape(escape_seq));
         }
     }
 }
