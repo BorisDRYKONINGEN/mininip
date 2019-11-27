@@ -46,3 +46,40 @@ fn value_parse_err() {
 
     assert!(val.is_err());
 }
+
+#[test]
+fn identifier_new_some() {
+    let section = Some(String::from("Section_name"));
+    let variable = String::from("Variable_name");
+    let ident = Identifier::new(section.clone(), variable.clone());
+
+    assert_eq!(ident, Identifier { section, name: variable });
+}
+
+#[test]
+fn identifier_new_none() {
+    let section = None;
+    let variable = String::from("Variable_name");
+    let ident = Identifier::new(section.clone(), variable.clone());
+
+    assert_eq!(ident, Identifier { section, name: variable });
+}
+
+#[test]
+#[should_panic]
+fn identifier_new_panics() {
+    let section = Some(String::from("Hello world"));
+    let variable = String::from("regular_name");
+    let _ident = Identifier::new(section, variable);
+}
+
+#[test]
+fn identifier_is_valid_full_test() {
+    assert!(Identifier::is_valid("UPPERCASE_ONE"));
+    assert!(Identifier::is_valid("lowercase_one"));
+    assert!(Identifier::is_valid("alpha_numeric_42"));
+    assert!(!Identifier::is_valid("42_starts_with_a_digit"));
+    assert!(!Identifier::is_valid("Non numeric nor alphabetic character"));
+    assert!(!Identifier::is_valid("Non_ascii_character_\u{263a}"));
+    assert!(!Identifier::is_valid(""));
+}

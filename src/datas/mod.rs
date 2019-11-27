@@ -68,5 +68,102 @@ impl Value {
 }
 
 
+/// The identifier of a variable, which is its identity. Of course, this type is `Hash` because it may be used as a key in a `HashMap`
+#[derive(Debug, Clone, PartialEq, Hash)]
+pub struct Identifier {
+    section: Option<String>,
+    name: String,
+}
+
+impl Identifier {
+    /// Creates an identifier with a valid section name and a valid name
+    /// 
+    /// # Panics
+    /// Panics if either `section` or `name` is an invalid identifier according to `Identifier::is_valid`
+    pub fn new(section: Option<String>, name: String) -> Identifier {
+        if let Some(section) = &section {
+            assert!(Identifier::is_valid(section));
+        }
+        assert!(Identifier::is_valid(&name));
+
+        Identifier {
+            section,
+            name,
+        }
+    }
+
+    /// Returns `true` if the given string is a valid identifier and `false` otherwise
+    pub fn is_valid(ident: &str) -> bool {
+        let ident = ident.trim();
+
+        let mut iter = ident.chars();
+        match iter.next() {
+            // An empty string is not allowed
+            None    => return false,
+
+            // The first character must be a letter
+            Some(c) => if !c.is_ascii() || !c.is_alphabetic() {
+                return false;
+            },
+        }
+
+        for i in iter {
+            // The following ones may be numeric characters
+            if !i.is_ascii() || !i.is_alphanumeric() && i != '_' {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Returns the name of the variable
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Returns the section of the variable
+    pub fn section(&self) -> Option<&str> {
+        match &self.section {
+            Some(val) => Some(&val),
+            None      => None,
+        }
+    }
+
+    /// Change the name of the variable
+    /// 
+    /// # Panics
+    /// Panics if `name` is invalid
+    pub fn change_name(&mut self, name: String) {
+        assert!(Identifier::is_valid(&name));
+
+        self.name = name;
+    }
+
+    /// Changes the section of the variable
+    /// 
+    /// # Panics
+    /// Panics if `section` is invalid
+    pub fn change_section(&mut self, section: Option<String>) {
+        if let Some(section) = &section {
+            assert!(Identifier::is_valid(section));
+        }
+
+        self.section = section;
+    }
+}
+
+impl Display for Identifier {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+        if let Some(section) = &self.section {
+            formatter.write_str(&section)?;
+            formatter.write_str(".")?;
+        }
+
+        formatter.write_str(&self.name)
+    }
+}
+
+
 #[cfg(test)]
 mod tests;
