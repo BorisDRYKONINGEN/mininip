@@ -83,3 +83,58 @@ fn identifier_is_valid_full_test() {
     assert!(!Identifier::is_valid("Non_ascii_character_\u{263a}"));
     assert!(!Identifier::is_valid(""));
 }
+
+#[test]
+fn identifier_change_section_ok() {
+    let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
+
+    ident.change_section(Some(String::from("Valid_one")));
+}
+
+#[test]
+#[should_panic]
+fn identifier_change_section_err() {
+    let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
+
+    ident.change_section(Some(String::from("Invalid one")));
+}
+
+#[test]
+fn identifier_change_section_none() {
+    let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
+
+    ident.change_section(None);
+}
+
+#[test]
+fn identifier_change_name_ok() {
+    let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
+
+    ident.change_name(String::from("Valid_one"));
+}
+
+#[test]
+#[should_panic]
+fn identifier_change_name_err() {
+    let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
+
+    ident.change_name(String::from("Invalid one"));
+}
+
+#[test]
+fn identifier_format_with_section() {
+    let section = String::from("Section");
+    let variable = String::from("Variable");
+    let ident = Identifier::new(Some(section.clone()), variable.clone());
+
+    assert_eq!(format!("{}", ident), format!("{}.{}", section, variable));
+}
+
+#[test]
+fn identifier_format_without_section() {
+    let section = None;
+    let variable = String::from("Variable");
+    let ident = Identifier::new(section, variable.clone());
+
+    assert_eq!(format!("{}", ident), variable);
+}
