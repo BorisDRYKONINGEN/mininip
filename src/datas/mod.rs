@@ -69,7 +69,7 @@ impl Value {
 
 
 /// The identifier of a variable, which is its identity. Of course, this type is `Hash` because it may be used as a key in a `HashMap`
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Identifier {
     section: Option<String>,
     name: String,

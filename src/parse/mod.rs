@@ -130,5 +130,9 @@ impl<T: Iterator<Item = char>> Iterator for TokenIterator<T> {
 }
 
 
+mod parser;
+pub use parser::*;
+
+
 #[cfg(test)]
 mod tests;
