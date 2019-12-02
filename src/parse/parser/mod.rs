@@ -50,16 +50,37 @@ impl Parser {
             None        => return Err(()),
         };
 
-        if equal == line.len() - 1 {
-            return Err(());
-        }
-
         let identifier = line[..equal].trim();
-        let line = &line[equal + 1..];
 
-        // Getting the expression of `value` in "`identifier`=`value`[;comment]"
-        let mut end: usize = line.len();
+        // Getting the expression of `value` in "`identifier` = `value`[;comment]"
+        let value = if line.len() == equal + 1 {
+            ""
+        } else {
+            ignore_comment(&line[equal + 1..])?.trim()
+        };
+
+        let identifier = parse::parse_str(identifier)?;
+        if !Identifier::is_valid(&identifier) {
+            return Err(())
+        }
+        let value = parse::parse_str(value)?;
+
+        self.variables.insert(
+            Identifier::new(self.cur_section.clone(), identifier),
+            Value::Str(value),
+        );
+        Ok(())
+    }
+}
+
+/// Returns a subslice of the given slice which is comment-free (stopped at the first non-escaped semicolon ';'). `line` should be a single line
+/// 
+/// # Panics
+/// Panics if a newline character '\n' is found in line. Note that once the non-escaped semicolon is found, the rest may be not read
+fn ignore_comment(line: &str) -> Result<&str, ()> {
+        let mut end = line.len();
         let mut escaped = false;
+
         for (n, i) in line.char_indices() {
             if i == '\n' {
                 return Err(());
@@ -78,21 +99,8 @@ impl Parser {
                 break;
             }
         }
-
-        let value = line[..end].trim();
-
-        let identifier = parse::parse_str(identifier)?;
-        if !Identifier::is_valid(&identifier) {
-            return Err(())
-        }
-        let value = parse::parse_str(value)?;
-
-        self.variables.insert(
-            Identifier::new(self.cur_section.clone(), identifier),
-            Value::Str(value),
-        );
-        Ok(())
-    }
+    
+    Ok(&line[..end])
 }
 
 

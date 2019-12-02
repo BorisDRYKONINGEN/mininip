@@ -108,3 +108,17 @@ fn parser_parse_assignment_bad_value() {
 
     assert_eq!(parser.parse_assignment(expr), Err(()));
 }
+
+#[test]
+fn parser_parse_assignment_no_value() {
+    let expr = "ident=";
+    let mut parser = Parser::new();
+
+    parser.parse_assignment(expr)
+        .expect("This code should be accepted because it's a valid INI assignment");
+
+    let data = parser.data();
+    let key = Identifier::new(None, String::from("ident"));
+    let val = Value::Str(String::new());
+    assert_eq!(data[&key], val);
+}
