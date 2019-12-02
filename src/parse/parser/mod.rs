@@ -71,6 +71,54 @@ impl Parser {
         );
         Ok(())
     }
+
+    /// Parses a section declaration. A section declaration is of form
+    /// 
+    /// ```ini
+    /// [section];comment
+    /// ```
+    fn parse_section(&mut self, line: &str) -> Result<(), ()> {
+        let line = line.trim_start();
+
+        let mut iter = line.char_indices();
+        match iter.next() {
+            None => return Err(()),
+            Some((_, c)) => if c != '[' {
+                return Err(());
+            },
+        }
+
+        let mut end = 0;
+        for (n, i) in iter.by_ref() {
+            if i == ']' {
+                end = n;
+                break;
+            }
+        }
+
+        // end < 1 means that iter was never iterated while end < 2 means that the section name is empty
+        if end < 2 {
+            return Err(());
+        }
+
+        let section = &line[1..end];
+        if !Identifier::is_valid(section) {
+            return Err(());
+        }
+
+        // Checking integrity: I want to ensure there is no extra character after the section declaration
+        // The only ones allowed are the whitespaces and the semicolon (with all the following ones)
+        for (_, i) in iter {
+            if i == ';' {
+                break;
+            } else if !i.is_whitespace() {
+                return Err(());
+            }
+        }
+
+        self.cur_section = Some(String::from(section));
+        Ok(())
+    }
 }
 
 /// Returns a subslice of the given slice which is comment-free (stopped at the first non-escaped semicolon ';'). `line` should be a single line

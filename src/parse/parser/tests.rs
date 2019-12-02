@@ -122,3 +122,97 @@ fn parser_parse_assignment_no_value() {
     let val = Value::Str(String::new());
     assert_eq!(data[&key], val);
 }
+
+#[test]
+fn parser_parse_section_simplest() {
+    let expr = "[section]";
+    let mut parser = Parser::new();
+
+    parser.parse_section(expr)
+        .expect("This code should be accepted because it's a valid INI section declaration");
+    
+    assert_eq!(parser.cur_section, Some(String::from("section")));
+
+    parser.parse_assignment("ident=val").unwrap();
+
+    let data = parser.data();
+    let key = Identifier::new(Some(String::from("section")), String::from("ident"));
+    let val = Value::Str(String::from("val"));
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_section_with_comment() {
+    let expr = "[section];comment";
+    let mut parser = Parser::new();
+
+    parser.parse_section(expr)
+        .expect("This code should be accepted because it's a valid INI section declaration");
+    
+    assert_eq!(parser.cur_section, Some(String::from("section")));
+
+    parser.parse_assignment("ident=val").unwrap();
+
+    let data = parser.data();
+    let key = Identifier::new(Some(String::from("section")), String::from("ident"));
+    let val = Value::Str(String::from("val"));
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_section_with_comment_and_whitespaces() {
+    let expr = "[section]\t ; comment";
+    let mut parser = Parser::new();
+
+    parser.parse_section(expr)
+        .expect("This code should be accepted because it's a valid INI section declaration");
+    
+    assert_eq!(parser.cur_section, Some(String::from("section")));
+
+    parser.parse_assignment("ident=val").unwrap();
+
+    let data = parser.data();
+    let key = Identifier::new(Some(String::from("section")), String::from("ident"));
+    let val = Value::Str(String::from("val"));
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_section_leading_extra_token() {
+    let expr = "char nullTerminatedString[BUFSIZ]";
+    let mut parser = Parser::new();
+
+    assert_eq!(parser.parse_section(expr), Err(()));
+}
+
+#[test]
+fn parser_parse_section_ending_extra_token() {
+    let expr = "[section] () -> bool { return true; }";
+    let mut parser = Parser::new();
+
+    assert_eq!(parser.parse_section(expr), Err(()));
+}
+
+#[test]
+fn parser_parse_section_invalid_identifier() {
+    let expr = "[hello there!]";
+    let mut parser = Parser::new();
+
+    assert_eq!(parser.parse_section(expr), Err(()));
+}
+
+#[test]
+fn parser_parse_section_empty() {
+    let expr = "[]";
+    let mut parser = Parser::new();
+
+    assert_eq!(parser.parse_section(expr), Err(()));
+}
+
+#[test]
+fn parser_parse_section_unterminated() {
+    let expr = "[EOF";
+    let mut parser = Parser::new();
+
+    assert_eq!(parser.parse_section(expr), Err(()));
+}
