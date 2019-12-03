@@ -216,3 +216,46 @@ fn parser_parse_section_unterminated() {
 
     assert_eq!(parser.parse_section(expr), Err(()));
 }
+
+#[test]
+fn parser_parse_line_assignment() {
+    let expr = "ident = val";
+    let mut parser = Parser::new();
+
+    parser.parse_line(expr)
+        .expect("This line should be accepted because it's a valid INI assignment");
+
+    let data = parser.data();
+    let key = Identifier::new(None, String::from("ident"));
+    let val = Value::Str(String::from("val"));
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_line_section() {
+    let expr = "[section]";
+    let mut parser = Parser::new();
+
+    parser.parse_line(expr)
+        .expect("This line should be accepted because it's a valid INI section declaration");
+
+    assert_eq!(parser.cur_section, Some(String::from("section")));
+}
+
+#[test]
+fn parser_parse_line_comment() {
+    let expr = "; Just a comment";
+    let mut parser = Parser::new();
+
+    parser.parse_line(expr)
+        .expect("This line should be accepted because it's a valid INI comment");
+}
+
+#[test]
+fn parser_parse_line_empty() {
+    let expr = "";
+    let mut parser = Parser::new();
+
+    parser.parse_line(expr)
+        .expect("This line should be accepted because it's a valid INI empty line");
+}

@@ -35,7 +35,13 @@ impl Parser {
     /// 
     /// `Err(())` in case of error
     pub fn parse_line(&mut self, line: &str) -> Result<(), ()> {
-        Err(())
+        let effective_line = line.trim_start();
+
+        match effective_line.chars().next() {
+            None | Some(';')    => Ok(()),
+            Some(c) if c == '[' => self.parse_section(effective_line),
+            Some(_)             => self.parse_assignment(effective_line),
+        }
     }
 
     /// Parses an assignment ligne. An assignment is of form
