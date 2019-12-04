@@ -9,6 +9,7 @@ pub enum Error<'a> {
     ExpectedToken(error_kinds::ExpectedToken<'a>),
     ExpectedEscape(error_kinds::ExpectedEscape<'a>),
     UnexpectedToken(error_kinds::UnexpectedToken<'a>),
+    InvalidEscape(error_kinds::InvalidEscape<'a>),
 }
 
 impl error::Error for Error<'_> {}
@@ -20,6 +21,7 @@ impl Display for Error<'_> {
             Error::ExpectedToken(err)      => write!(f, "{}", err),
             Error::ExpectedEscape(err)     => write!(f, "{}", err),
             Error::UnexpectedToken(err)    => write!(f, "{}", err),
+            Error::InvalidEscape(err)      => write!(f, "{}", err),
         }
     }
 }
@@ -175,6 +177,40 @@ pub mod error_kinds {
                 line,
                 index,
                 token: super::nth_char(line, index),
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct InvalidEscape<'a> {
+        line: &'a str,
+        escape: &'a str,
+    }
+
+    impl error::Error for InvalidEscape<'_> {}
+
+    impl Display for InvalidEscape<'_> {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "Invalid escape sequence {} in {}", self.escape, self.line)
+        }
+    }
+
+    impl<'a> InvalidEscape<'a> {
+        /// Creates a new `InvalidEscape` error
+        /// 
+        /// # Parameters
+        /// `line`: the line where the error occured
+        /// 
+        /// `escape`: the escape sequence which is invalid
+        /// 
+        /// # Panics
+        /// Panics if `escape` is not in `line`
+        pub fn new(line: &'a str, escape: &'a str) -> InvalidEscape<'a> {
+            assert!(line.find(escape).is_some(), "`line` must contain `escape`");
+
+            InvalidEscape {
+                line,
+                escape,
             }
         }
     }

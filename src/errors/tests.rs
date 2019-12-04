@@ -37,6 +37,15 @@ fn unexpected_token_format() {
 }
 
 #[test]
+fn invalid_escape_format() {
+    let line = "ident=\\xyzabcd";
+    let err = error_kinds::InvalidEscape::new(line, "\\xyzabcd");
+
+    let fmt = format!("{}", err);
+    assert_eq!(fmt, "Invalid escape sequence \\xyzabcd in ident=\\xyzabcd");
+}
+
+#[test]
 #[should_panic]
 fn expected_identifier_overflow() {
     let line = "[]; a non-named section";
@@ -78,6 +87,13 @@ fn unexpected_token_alignment_error() {
     let line = "greet = hello \u{263a}";
     // 15 is not an overflow but it's the second byte of ☺ (the last character)
     let _err = error_kinds::UnexpectedToken::new(line, 15);
+}
+
+#[test]
+#[should_panic]
+fn invalid_escape_not_included() {
+    let line = "ident=\\xyzabcd";
+    let _err = error_kinds::InvalidEscape::new(line, "\\{");
 }
 
 #[test]
