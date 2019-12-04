@@ -3,6 +3,7 @@
 pub mod datas;
 pub mod dump;
 pub mod parse;
+pub mod errors;
 
 #[cfg(test)]
 mod tests;
