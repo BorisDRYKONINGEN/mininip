@@ -10,6 +10,7 @@ pub enum Error<'a> {
     ExpectedEscape(error_kinds::ExpectedEscape<'a>),
     UnexpectedToken(error_kinds::UnexpectedToken<'a>),
     InvalidEscape(error_kinds::InvalidEscape<'a>),
+    InvalidIdentifier(error_kinds::InvalidIdentifier<'a>),
 }
 
 impl error::Error for Error<'_> {}
@@ -22,6 +23,7 @@ impl Display for Error<'_> {
             Error::ExpectedEscape(err)     => write!(f, "{}", err),
             Error::UnexpectedToken(err)    => write!(f, "{}", err),
             Error::InvalidEscape(err)      => write!(f, "{}", err),
+            Error::InvalidIdentifier(err)  => write!(f, "{}", err),
         }
     }
 }
@@ -211,6 +213,43 @@ pub mod error_kinds {
             InvalidEscape {
                 line,
                 escape,
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct InvalidIdentifier<'a> {
+        line: &'a str,
+        ident: &'a str,
+    }
+
+    impl error::Error for InvalidIdentifier<'_> {}
+
+    impl Display for InvalidIdentifier<'_> {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "Invalid identifier {} in {}", self.ident, self.line)
+        }
+    }
+
+    impl<'a> InvalidIdentifier<'a> {
+        /// Creates a new `InvalidIdentifier` error
+        /// 
+        /// # Parameters
+        /// `line`: the line where the error occured
+        /// 
+        /// `identifier`: the identifier found. It must be invalid
+        /// 
+        /// # Panics
+        /// Panics
+        /// - if `identifier` is valid
+        /// - if `identifier` is not in `line`
+        pub fn new(line: &'a str, identifier: &'a str) -> InvalidIdentifier<'a> {
+            assert!(line.find(identifier).is_some(), "`line` must contain `identifier`");
+            assert!(!crate::datas::Identifier::is_valid(identifier), "`identifier` must be an invalid identifier");
+
+            InvalidIdentifier {
+                line,
+                ident: identifier,
             }
         }
     }
