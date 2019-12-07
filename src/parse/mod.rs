@@ -23,11 +23,10 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
     for i in TokenIterator::from(content.chars()) {
         let escape = match i {
             Token::Char(c) => {
-                // Since I can't use
                 let n = next;
-                next += c.len_utf8();
+                next += 1;
 
-                if FORBIDDEN.contains(&c) {
+                if FORBIDDEN.contains(&c) || !c.is_ascii() {
                     let escape = crate::dump::dump_str(&format!("{}", c));
                     let err = Error::ExpectedEscape(error_kinds::ExpectedEscape::new(content, n, escape));
                     return Err(err);

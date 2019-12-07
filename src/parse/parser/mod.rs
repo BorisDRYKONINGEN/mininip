@@ -117,8 +117,10 @@ impl Parser {
             }
         }
 
-        // end < 1 means that iter was never iterated while end < 2 means that the section name is empty
-        if end < 2 {
+        // end == 0 means that there isn't any ']' while end == 1 means that the section name is empty
+        if end == 0 {
+            return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(line, leading_spaces + 1, String::from("]"))));
+        } else if end == 1 {
             return Err(Error::ExpectedIdentifier(error_kinds::ExpectedIdentifier::new(line, leading_spaces + 1)));
         }
 
