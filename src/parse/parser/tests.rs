@@ -1,5 +1,6 @@
 use crate::parse::*;
 use crate::datas::{Identifier, Value};
+use crate::errors::Error;
 
 #[test]
 fn parser_parse_assignment_simplest() {
@@ -90,7 +91,11 @@ fn parser_parse_assignment_unicode_identifier() {
     let expr = r"é=\x0000e9";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_assignment(expr), Err(()));
+    match parser.parse_assignment(expr) {
+        Ok(())                           => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::InvalidIdentifier(_)) => {},
+        Err(err)                         => panic!("Wrong return value for this error: {:?}", err),
+    }
 }
 
 #[test]
@@ -98,7 +103,11 @@ fn parser_parse_assignment_bad_ident() {
     let expr = "my identifier=val";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_assignment(expr), Err(()));
+    match parser.parse_assignment(expr) {
+        Ok(())                           => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::InvalidIdentifier(_)) => {},
+        Err(err)                         => panic!("Wrong return value for this error: {:?}", err),
+    }
 }
 
 #[test]
@@ -106,7 +115,11 @@ fn parser_parse_assignment_bad_value() {
     let expr = "ident=abc=123";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_assignment(expr), Err(()));
+    match parser.parse_assignment(expr) {
+        Ok(())                        => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::ExpectedEscape(_)) => {},
+        Err(err)                      => panic!("Wrong return value for this error: {:?}", err),
+    }
 }
 
 #[test]
@@ -178,11 +191,12 @@ fn parser_parse_section_with_comment_and_whitespaces() {
 }
 
 #[test]
+#[should_panic]
 fn parser_parse_section_leading_extra_token() {
     let expr = "char nullTerminatedString[BUFSIZ]";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_section(expr), Err(()));
+    std::mem::drop(parser.parse_section(expr));
 }
 
 #[test]
@@ -190,7 +204,11 @@ fn parser_parse_section_ending_extra_token() {
     let expr = "[section] () -> bool { return true; }";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_section(expr), Err(()));
+    match parser.parse_section(expr) {
+        Ok(())                         => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::UnexpectedToken(_)) => {},
+        Err(err)                       => panic!("Wrong return value: {:?}", err),
+    }
 }
 
 #[test]
@@ -198,7 +216,11 @@ fn parser_parse_section_invalid_identifier() {
     let expr = "[hello there!]";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_section(expr), Err(()));
+    match parser.parse_section(expr) {
+        Ok(())                           => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::InvalidIdentifier(_)) => {},
+        Err(err)                         => panic!("Wrong return value: {:?}", err),
+    }
 }
 
 #[test]
@@ -206,7 +228,11 @@ fn parser_parse_section_empty() {
     let expr = "[]";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_section(expr), Err(()));
+    match parser.parse_section(expr) {
+        Ok(())                            => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::ExpectedIdentifier(_)) => {},
+        Err(err)                          => panic!("Wrong return value: {:?}", err),
+    }
 }
 
 #[test]
@@ -214,7 +240,11 @@ fn parser_parse_section_unterminated() {
     let expr = "[EOF";
     let mut parser = Parser::new();
 
-    assert_eq!(parser.parse_section(expr), Err(()));
+    match parser.parse_section(expr) {
+        Ok(())                       => panic!("This code is wrong and shouldn't be accepted"),
+        Err(Error::ExpectedToken(_)) => {},
+        Err(err)                     => panic!("Wrong return value: {:?}", err),
+    }
 }
 
 #[test]

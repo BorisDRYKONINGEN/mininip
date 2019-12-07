@@ -34,7 +34,7 @@ fn value_dump() {
 
 #[test]
 fn value_parse_ok() -> Result<(), ()> {
-    let val = Value::parse_str(r"Hello \x002665")?;
+    let val = Value::parse_str(r"Hello \x002665").unwrap();
 
     assert_eq!(val, Value::Str(String::from("Hello \u{2665}")));
     Ok(())

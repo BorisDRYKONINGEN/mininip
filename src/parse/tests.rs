@@ -1,4 +1,5 @@
 use crate::parse::*;
+use crate::errors::Error;
 
 #[test]
 fn token_iterator_no_escapes() {
@@ -57,48 +58,57 @@ fn token_iterator_unfinished_escape() {
 }
 
 #[test]
-fn parse_str_ignore() -> Result<(), ()> {
+fn parse_str_ignore() {
     let message = "Hello world";
 
-    assert_eq!(message, parse_str(message)?);
-    Ok(())
+    assert_eq!(message, parse_str(message).expect("This string is well escaped"));
 }
 
 #[test]
-fn parse_str_special_escapes() -> Result<(), ()> {
+fn parse_str_special_escapes() {
     let message = "\\a\\b\\;\\:\\=\\'\\\"\\t\\r\\n\\0\\\\";
     let expected = "\x07\x08;:='\"\t\r\n\0\\";
 
-    assert_eq!(parse_str(message)?, expected);
-    Ok(())
+    assert_eq!(parse_str(message).expect("This string is well escaped"), expected);
 }
 
 #[test]
-fn parse_str_unicode_escapes() -> Result<(), ()> {
+fn parse_str_unicode_escapes() {
     let message = r"\x00263a\x002665\x000100";
     let expected = "\u{263a}\u{2665}\u{100}";
 
-    assert_eq!(parse_str(message)?, expected);
-    Ok(())
+    assert_eq!(parse_str(message).expect("This string is well escaped"), expected);
 }
 
 #[test]
 fn parse_str_unfinished_escape() {
     let message = r"Hello\";
 
-    assert_eq!(parse_str(message), Err(()));
+    match parse_str(message) {
+        Ok(_)                        => panic!("This string is ill-escaped and shouldn't be accepted"),
+        Err(Error::InvalidEscape(_)) => {},
+        Err(err)                     => panic!("Wrong return value: {:?}", err),
+    }
 }
 
 #[test]
 fn parse_str_forbidden_ascii() {
     let message = r"hello=world";
 
-    assert_eq!(parse_str(message), Err(()));
+    match parse_str(message) {
+        Ok(_)                         => panic!("This string is ill-escaped and shouldn't be accepted"),
+        Err(Error::ExpectedEscape(_)) => {},
+        Err(err)                      => panic!("Wrong return value: {:?}", err),
+    }
 }
 
 #[test]
 fn parse_str_forbidden_unicode() {
     let message = "☺";
 
-    assert_eq!(parse_str(message), Err(()));
+    match parse_str(message) {
+        Ok(_)                         => panic!("This string is ill-escaped and shouldn't be accepted"),
+        Err(Error::ExpectedEscape(_)) => {},
+        Err(err)                      => panic!("Wrong return value: {:?}", err),
+    }
 }

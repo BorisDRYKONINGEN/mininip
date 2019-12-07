@@ -4,6 +4,6 @@ use crate::{parse, dump};
 fn parse_reverses_dump() -> Result<(), ()> {
     let message = "Hello world ☺. 1+1=2; 2+2=4 \\0/";
 
-    assert_eq!(parse::parse_str(&dump::dump_str(message))?, message);
+    assert_eq!(parse::parse_str(&dump::dump_str(message)).expect("`dump_str` must return a well escaped string"), message);
     Ok(())
 }
