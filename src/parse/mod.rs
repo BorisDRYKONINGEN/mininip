@@ -1,33 +1,36 @@
 //! Provides tools to parse an INI file
 
 use std::iter::Fuse;
+use crate::errors::{Error, error_kinds};
 
 /// Reads a string formatted by `dump_str` and unescapes the escaped characters
 /// 
 /// # Return value
 /// `Ok(string)` with `string` as the result once parsed
 /// 
-/// `Err(())` This return type may change in the future
+/// `Err(err)` In case of error with `err` as the error code
 /// 
 /// # Encoding issues
 /// Only allows ASCII because Unicode or other encodings musn't appear in an INI file (except in comments but this function is not intended to parse whole files)
-pub fn parse_str(content: &str) -> Result<String, ()> {
-    for i in content.chars() {
-        if !i.is_ascii() {
-            return Err(());
-        }
-    }
-
+pub fn parse_str(content: &str) -> Result<String, Error> {
     // new will never be wider than content
     let mut new = String::with_capacity(content.len());
 
     static FORBIDDEN: [char; 12] = ['\x07', '\x08', '\t', '\r', '\n', '\0', '\\', '\'', '\"', ';', ':', '='];
 
+    // `next` is the index (as bytes) of the next escape sequence in content
+    let mut next = 0;
     for i in TokenIterator::from(content.chars()) {
         let escape = match i {
             Token::Char(c) => {
+                // Since I can't use
+                let n = next;
+                next += c.len_utf8();
+
                 if FORBIDDEN.contains(&c) {
-                    return Err(());
+                    let escape = crate::dump::dump_str(&format!("{}", c));
+                    let err = Error::ExpectedEscape(error_kinds::ExpectedEscape::new(content, n, escape));
+                    return Err(err);
                 }
 
                 new.push(c);
@@ -35,6 +38,9 @@ pub fn parse_str(content: &str) -> Result<String, ()> {
             },
             Token::Escape(s) => s,
         };
+
+        let n = next;
+        next += escape.len();
 
         match escape.as_str() {
             "\\a"  => new.push('\x07'),
@@ -56,16 +62,16 @@ pub fn parse_str(content: &str) -> Result<String, ()> {
                 let values = &escape[2..];
                 let code = match u32::from_str_radix(values, 16) {
                     Ok(val) => val,
-                    Err(_)  => return Err(()),
+                    Err(_)  => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(content, &content[n..escape.len() + n]))),
                 };
                 let character = match std::char::from_u32(code) {
                     Some(val) => val,
-                    None      => return Err(()),
+                    None      => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(content, &content[n..escape.len() + n]))),
                 };
                 new.push(character);
             },
 
-            _ => return Err(()),
+            _ => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(content, &content[n..escape.len() + n]))),
         }
     }
 

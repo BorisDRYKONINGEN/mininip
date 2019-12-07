@@ -2,6 +2,7 @@
 
 use std::fmt::{self, Display, Formatter};
 use crate::{parse, dump};
+use crate::errors::Error;
 
 /// The value of a INI variable. May be edited in the future to add new types
 #[derive(Debug, Clone, PartialEq)]
@@ -36,7 +37,7 @@ impl Value {
     /// `Ok(value)` with `value` as the new object. Note that `value` will always be a `Value::Str` when calling this method
     /// 
     /// `Err(())` when an error occurs while parsing content
-    pub fn parse_str(content: &str) -> Result<Value, ()> {
+    pub fn parse_str(content: &str) -> Result<Value, Error> {
         Ok(Value::Str(parse::parse_str(content)?))
     }
 
