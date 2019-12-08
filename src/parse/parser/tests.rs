@@ -12,7 +12,7 @@ fn parser_parse_assignment_simplest() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -26,7 +26,7 @@ fn parser_parse_assignment_commented() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -40,7 +40,7 @@ fn parser_parse_assignment_with_spaces() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -54,7 +54,7 @@ fn parser_parse_assignment_with_comment_and_spaces() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -68,7 +68,7 @@ fn parser_parse_assignment_unicode_value() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("latin_small_letter_e_with_acute"));
-    let val = Value::Str(String::from("\u{e9}"));
+    let val = Value::Raw(String::from("\u{e9}"));
     assert_eq!(data[&key], val);
 }
 
@@ -82,7 +82,7 @@ fn parser_parse_assignment_unicode_comment() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -132,7 +132,7 @@ fn parser_parse_assignment_no_value() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::new());
+    let val = Value::Raw(String::new());
     assert_eq!(data[&key], val);
 }
 
@@ -150,7 +150,7 @@ fn parser_parse_section_simplest() {
 
     let data = parser.data();
     let key = Identifier::new(Some(String::from("section")), String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -168,7 +168,7 @@ fn parser_parse_section_with_comment() {
 
     let data = parser.data();
     let key = Identifier::new(Some(String::from("section")), String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -186,7 +186,7 @@ fn parser_parse_section_with_comment_and_whitespaces() {
 
     let data = parser.data();
     let key = Identifier::new(Some(String::from("section")), String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 
@@ -257,7 +257,7 @@ fn parser_parse_line_assignment() {
 
     let data = parser.data();
     let key = Identifier::new(None, String::from("ident"));
-    let val = Value::Str(String::from("val"));
+    let val = Value::Raw(String::from("val"));
     assert_eq!(data[&key], val);
 }
 

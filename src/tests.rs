@@ -28,15 +28,15 @@ fn parse_good_file() {
 
     println!("{:?}", data);
 
-    assert_eq!(data[&author], Value::Str(String::from("Boris DRYKONINGEN")));
-    assert_eq!(data[&version_major], Value::Str(String::from("0")));
+    assert_eq!(data[&author], Value::Raw(String::from("Boris DRYKONINGEN")));
+    assert_eq!(data[&version_major], Value::Raw(String::from("0")));
 
-    assert_eq!(data[&one], Value::Str(String::from("1")));
-    assert_eq!(data[&two], Value::Str(String::from("2")));
-    assert_eq!(data[&three], Value::Str(String::from("3")));
+    assert_eq!(data[&one], Value::Raw(String::from("1")));
+    assert_eq!(data[&two], Value::Raw(String::from("2")));
+    assert_eq!(data[&three], Value::Raw(String::from("3")));
 
-    assert_eq!(data[&smiley], Value::Str(String::from("\u{263a}")));
-    assert_eq!(data[&semicolon], Value::Str(String::from(";")));
+    assert_eq!(data[&smiley], Value::Raw(String::from("\u{263a}")));
+    assert_eq!(data[&semicolon], Value::Raw(String::from(";")));
 }
 
 #[test]

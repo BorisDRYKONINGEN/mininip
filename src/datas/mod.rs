@@ -7,26 +7,20 @@ use crate::errors::Error;
 /// The value of a INI variable. May be edited in the future to add new types
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    Str(String),
-}
-
-impl From<String> for Value {
-    fn from(string: String) -> Self {
-        Value::Str(string)
-    }
+    Raw(String),
 }
 
 impl Display for Value {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
-            Value::Str(string) => string.fmt(formatter),
+            Value::Raw(string) => string.fmt(formatter),
         }
     }
 }
 
 impl Default for Value {
     fn default() -> Self {
-        Value::Str(String::new())
+        Value::Raw(String::new())
     }
 }
 
@@ -38,7 +32,7 @@ impl Value {
     /// 
     /// `Err(())` when an error occurs while parsing content
     pub fn parse_str(content: &str) -> Result<Value, Error> {
-        Ok(Value::Str(parse::parse_str(content)?))
+        Ok(Value::Raw(parse::parse_str(content)?))
     }
 
     /// Formats `self` to be dumped in the INI file
@@ -56,14 +50,14 @@ impl Value {
     /// ```
     /// use mininip::datas::Value;
     /// 
-    /// let val = Value::from(String::from("très_content=☺ ; the symbol of hapiness"));
+    /// let val = Value::Raw(String::from("très_content=☺ ; the symbol of hapiness"));
     /// let dumped = val.dump();
     /// 
-    /// assert_eq!(dumped, "'tr\\x0000e8s_content\\=\\x00263a \\; the symbol of hapiness'"); // Notice the leading and the ending '\''
+    /// assert_eq!(dumped, "tr\\x0000e8s_content\\=\\x00263a \\; the symbol of hapiness");
     /// ```
     pub fn dump(&self) -> String {
         match self {
-            Value::Str(string) => format!("'{}'", dump::dump_str(&string)),
+            Value::Raw(string) => format!("{}", dump::dump_str(&string)),
         }
     }
 }

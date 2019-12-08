@@ -86,7 +86,7 @@ impl Parser {
 
         self.variables.insert(
             Identifier::new(self.cur_section.clone(), identifier),
-            Value::Str(value),
+            Value::Raw(value),
         );
         Ok(())
     }
