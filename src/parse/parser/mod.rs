@@ -35,13 +35,13 @@ impl Parser {
     /// `Ok(())` in case of success
     /// 
     /// `Err(())` in case of error
-    pub fn parse_line<'a>(&mut self, line: &'a str) -> Result<(), Error<'a>> {
+    pub fn parse_line(&mut self, line: &str) -> Result<(), Error> {
         let effective_line = line.trim_start();
 
         match effective_line.chars().next() {
             None | Some(';')    => Ok(()),
-            Some(c) if c == '[' => self.parse_section(effective_line),
-            Some(_)             => self.parse_assignment(effective_line),
+            Some(c) if c == '[' => self.parse_section(line),
+            Some(_)             => self.parse_assignment(line),
         }
     }
 
@@ -50,7 +50,7 @@ impl Parser {
     /// ```ini
     /// identifier=value;comment
     /// ```
-    fn parse_assignment<'a>(&mut self, line: &'a str) -> Result<(), Error<'a>> {
+    fn parse_assignment(&mut self, line: &str) -> Result<(), Error> {
         // Getting the expression of `identifier` in "`identifier` = `value`[;comment]"
         let equal = match line.find('=') {
             Some(index) => index,
@@ -63,11 +63,11 @@ impl Parser {
                     None        => effective_line.len(),
                 };
 
-                return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(line, end_of_ident + leading_spaces, String::from("="))));
+                return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(String::from(line), end_of_ident + leading_spaces, String::from("="))));
             }
         };
 
-        let identifier = line[..equal].trim();
+        let identifier = String::from(line[..equal].trim());
 
         // Getting the expression of `value` in "`identifier` = `value`[;comment]"
         let value = if line.len() == equal + 1 {
@@ -76,13 +76,13 @@ impl Parser {
             ignore_comment(&line[equal + 1..]).trim()
         };
 
-        if !Identifier::is_valid(identifier) {
-            return Err(Error::InvalidIdentifier(error_kinds::InvalidIdentifier::new(line, identifier)));
+        if !Identifier::is_valid(&identifier) {
+            return Err(Error::InvalidIdentifier(error_kinds::InvalidIdentifier::new(String::from(line), identifier)));
         }
         let value = parse::parse_str(value)?;
 
         self.variables.insert(
-            Identifier::new(self.cur_section.clone(), String::from(identifier)),
+            Identifier::new(self.cur_section.clone(), identifier),
             Value::Str(value),
         );
         Ok(())
@@ -96,7 +96,7 @@ impl Parser {
     /// 
     /// # Panics
     /// Panics if line doesn't start with a `[` character, which indicates `line` is not a section declaration but may is a valid INI instruction. In this way, we can't return an error expecting a `[` at the beginning of the line, which doesn't make any sense
-    fn parse_section<'a>(&mut self, line: &'a str) -> Result<(), Error<'a>> {
+    fn parse_section(&mut self, line: &str) -> Result<(), Error> {
         let initial_line = line;
         let line = line.trim_start();
         let leading_spaces = initial_line.len() - line.len();
@@ -119,14 +119,14 @@ impl Parser {
 
         // end == 0 means that there isn't any ']' while end == 1 means that the section name is empty
         if end == 0 {
-            return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(line, leading_spaces + 1, String::from("]"))));
+            return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(String::from(line), leading_spaces, String::from("]"))));
         } else if end == 1 {
-            return Err(Error::ExpectedIdentifier(error_kinds::ExpectedIdentifier::new(line, leading_spaces + 1)));
+            return Err(Error::ExpectedIdentifier(error_kinds::ExpectedIdentifier::new(String::from(line), leading_spaces + 1)));
         }
 
         let section = &line[1..end];
         if !Identifier::is_valid(section) {
-            return Err(Error::InvalidIdentifier(error_kinds::InvalidIdentifier::new(line, section)));
+            return Err(Error::InvalidIdentifier(error_kinds::InvalidIdentifier::new(String::from(line), String::from(section))));
         }
 
         // Checking integrity: I want to ensure there is no extra character after the section declaration
@@ -135,6 +135,7 @@ impl Parser {
             if i == ';' {
                 break;
             } else if !i.is_whitespace() {
+                let line = String::from(line);
                 return Err(Error::UnexpectedToken(error_kinds::UnexpectedToken::new(line, leading_spaces // The leading spaces ignored
                                                                                          + 2             // The '[' and ']' characters
                                                                                          + section.len() // The identifier

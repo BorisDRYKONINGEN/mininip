@@ -2,7 +2,7 @@ use crate::errors::*;
 
 #[test]
 fn expected_identifier_format() {
-    let line = "=hello";
+    let line = String::from("=hello");
     let err = error_kinds::ExpectedIdentifier::new(line, 0);
 
     let fmt = format!("{}", err);
@@ -11,7 +11,7 @@ fn expected_identifier_format() {
 
 #[test]
 fn expected_token_format() {
-    let line = "hello world";
+    let line = String::from("hello world");
     let err = error_kinds::ExpectedToken::new(line, 5, String::from("="));
 
     let fmt = format!("{}", err);
@@ -20,7 +20,7 @@ fn expected_token_format() {
 
 #[test]
 fn expected_escape_format() {
-    let line = "greet = hello \u{263a}";
+    let line = String::from("greet = hello \u{263a}");
     let err = error_kinds::ExpectedEscape::new(line, 14, String::from("\\x00263a"));
 
     let fmt = format!("{}", err);
@@ -29,7 +29,7 @@ fn expected_escape_format() {
 
 #[test]
 fn unexpected_token_format() {
-    let line = "ident\\x002665 = value";
+    let line = String::from("ident\\x002665 = value");
     let err = error_kinds::UnexpectedToken::new(line, 5);
 
     let fmt = format!("{}", err);
@@ -38,8 +38,8 @@ fn unexpected_token_format() {
 
 #[test]
 fn invalid_escape_format() {
-    let line = "ident=\\xyzabcd";
-    let err = error_kinds::InvalidEscape::new(line, "\\xyzabcd");
+    let line = String::from("ident=\\xyzabcd");
+    let err = error_kinds::InvalidEscape::new(line, String::from("\\xyzabcd"));
 
     let fmt = format!("{}", err);
     assert_eq!(fmt, "Invalid escape sequence \\xyzabcd in ident=\\xyzabcd");
@@ -48,28 +48,28 @@ fn invalid_escape_format() {
 #[test]
 #[should_panic]
 fn expected_identifier_overflow() {
-    let line = "[]; a non-named section";
+    let line = String::from("[]; a non-named section");
     let _err = error_kinds::ExpectedIdentifier::new(line, 1_000_000);
 }
 
 #[test]
 #[should_panic]
 fn expected_token_overflow() {
-    let line = "hello world";
+    let line = String::from("hello world");
     let _err = error_kinds::ExpectedToken::new(line, 1_000_000, String::from("="));
 }
 
 #[test]
 #[should_panic]
 fn expected_escape_overflow() {
-    let line = "hello world";
+    let line = String::from("hello world");
     let _err = error_kinds::ExpectedEscape::new(line, 1_000_000, String::from("\\x00263a"));
 }
 
 #[test]
 #[should_panic]
 fn expected_escape_alignment_error() {
-    let line = "greet = hello \u{263a}";
+    let line = String::from("greet = hello \u{263a}");
     // 15 is not an overflow but it's the second byte of ☺ (the last character)
     let _err = error_kinds::ExpectedEscape::new(line, 15, String::from("\\x00263a"));
 }
@@ -77,14 +77,14 @@ fn expected_escape_alignment_error() {
 #[test]
 #[should_panic]
 fn unexpected_token_overflow() {
-    let line = "hello world";
+    let line = String::from("hello world");
     let _err = error_kinds::UnexpectedToken::new(line, 1000_000);
 }
 
 #[test]
 #[should_panic]
 fn unexpected_token_alignment_error() {
-    let line = "greet = hello \u{263a}";
+    let line = String::from("greet = hello \u{263a}");
     // 15 is not an overflow but it's the second byte of ☺ (the last character)
     let _err = error_kinds::UnexpectedToken::new(line, 15);
 }
@@ -92,8 +92,8 @@ fn unexpected_token_alignment_error() {
 #[test]
 #[should_panic]
 fn invalid_escape_not_included() {
-    let line = "ident=\\xyzabcd";
-    let _err = error_kinds::InvalidEscape::new(line, "\\{");
+    let line = String::from("ident=\\xyzabcd");
+    let _err = error_kinds::InvalidEscape::new(line, String::from("\\{"));
 }
 
 #[test]

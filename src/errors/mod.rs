@@ -4,18 +4,18 @@ use std::error;
 use std::fmt::{self, Display};
 
 #[derive(Debug)]
-pub enum Error<'a> {
-    ExpectedIdentifier(error_kinds::ExpectedIdentifier<'a>),
-    ExpectedToken(error_kinds::ExpectedToken<'a>),
-    ExpectedEscape(error_kinds::ExpectedEscape<'a>),
-    UnexpectedToken(error_kinds::UnexpectedToken<'a>),
-    InvalidEscape(error_kinds::InvalidEscape<'a>),
-    InvalidIdentifier(error_kinds::InvalidIdentifier<'a>),
+pub enum Error {
+    ExpectedIdentifier(error_kinds::ExpectedIdentifier),
+    ExpectedToken(error_kinds::ExpectedToken),
+    ExpectedEscape(error_kinds::ExpectedEscape),
+    UnexpectedToken(error_kinds::UnexpectedToken),
+    InvalidEscape(error_kinds::InvalidEscape),
+    InvalidIdentifier(error_kinds::InvalidIdentifier),
 }
 
-impl error::Error for Error<'_> {}
+impl error::Error for Error {}
 
-impl Display for Error<'_> {
+impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::ExpectedIdentifier(err) => write!(f, "{}", err),
@@ -34,20 +34,20 @@ pub mod error_kinds {
     use std::fmt::{self, Display};
 
     #[derive(Debug)]
-    pub struct ExpectedIdentifier<'a> {
+    pub struct ExpectedIdentifier {
         index: usize,
-        line: &'a str,
+        line: String,
     }
 
-    impl error::Error for ExpectedIdentifier<'_> {}
+    impl error::Error for ExpectedIdentifier {}
 
-    impl Display for ExpectedIdentifier<'_> {
+    impl Display for ExpectedIdentifier {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Expected identifier {}{{here}}{}", &self.line[..self.index], &self.line[self.index..])
         }
     }
 
-    impl<'a> ExpectedIdentifier<'a> {
+    impl ExpectedIdentifier {
         /// Creates a new `ExpectedIdentifier` error
         /// 
         /// # Parameters
@@ -57,7 +57,7 @@ pub mod error_kinds {
         /// 
         /// # Panics
         /// Panics if index is too big
-        pub fn new(line: &'a str, index: usize) -> ExpectedIdentifier<'a> {
+        pub fn new(line: String, index: usize) -> ExpectedIdentifier {
             assert!(line.len() > index, "`index` must be a valid index in `line`");
 
             ExpectedIdentifier {
@@ -68,21 +68,21 @@ pub mod error_kinds {
     }
 
     #[derive(Debug)]
-    pub struct ExpectedToken<'a> {
+    pub struct ExpectedToken {
         index: usize,
-        line: &'a str,
+        line: String,
         tokens: String,
     }
 
-    impl error::Error for ExpectedToken<'_> {}
+    impl error::Error for ExpectedToken {}
 
-    impl Display for ExpectedToken<'_> {
+    impl Display for ExpectedToken {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Expected {} {}{{here}}{}", self.tokens, &self.line[..self.index], &self.line[self.index..])
         }
     }
 
-    impl<'a> ExpectedToken<'a> {
+    impl ExpectedToken {
         /// Creates a new `ExpectedToken` error
         /// 
         /// # Parameters
@@ -94,7 +94,7 @@ pub mod error_kinds {
         /// 
         /// # Panics
         /// Panics if `index` is too big
-        pub fn new(line: &'a str, index: usize, tokens: String) -> ExpectedToken<'a> {
+        pub fn new(line: String, index: usize, tokens: String) -> ExpectedToken {
             assert!(line.len() > index, "`index` must be a valid index");
 
             ExpectedToken {
@@ -106,16 +106,16 @@ pub mod error_kinds {
     }
 
     #[derive(Debug)]
-    pub struct ExpectedEscape<'a> {
+    pub struct ExpectedEscape {
         index: usize,
-        line: &'a str,
+        line: String,
         replace: String,
         token: char,
     }
 
-    impl error::Error for ExpectedEscape<'_> {}
+    impl error::Error for ExpectedEscape {}
 
-    impl Display for ExpectedEscape<'_> {
+    impl Display for ExpectedEscape {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Expected escape sequence {} instead of {} in {}{{here}}{}", 
                        self.replace,
@@ -125,7 +125,7 @@ pub mod error_kinds {
         }
     }
 
-    impl<'a> ExpectedEscape<'a> {
+    impl ExpectedEscape {
         /// Creates a new `ExpectedEscape` error
         /// 
         /// # Parameters
@@ -137,10 +137,10 @@ pub mod error_kinds {
         /// 
         /// # Panics
         /// Panics if `index` is too big or is at an invalid position
-        pub fn new(line: &'a str, index: usize, replace: String) -> ExpectedEscape<'a> {
+        pub fn new(line: String, index: usize, replace: String) -> ExpectedEscape {
             ExpectedEscape {
+                token: super::nth_char(&line, index),
                 line,
-                token: super::nth_char(line, index),
                 replace,
                 index,
             }
@@ -148,15 +148,15 @@ pub mod error_kinds {
     }
 
     #[derive(Debug)]
-    pub struct UnexpectedToken<'a> {
+    pub struct UnexpectedToken {
         index: usize,
-        line: &'a str,
+        line: String,
         token: char,
     }
 
-    impl error::Error for UnexpectedToken<'_> {}
+    impl error::Error for UnexpectedToken {}
 
-    impl Display for UnexpectedToken<'_> {
+    impl Display for UnexpectedToken {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Unexpected token {} {}{{here}}",
                        self.token,
@@ -164,7 +164,7 @@ pub mod error_kinds {
         }
     }
 
-    impl<'a> UnexpectedToken<'a> {
+    impl UnexpectedToken {
         /// Creates a new `UnexpectedToken` error
         /// 
         /// # Parameters
@@ -174,30 +174,30 @@ pub mod error_kinds {
         /// 
         /// # Panics
         /// Panics if `index` is too big or is at an invalid position
-        pub fn new(line: &'a str, index: usize) -> UnexpectedToken<'a> {
+        pub fn new(line: String, index: usize) -> UnexpectedToken {
             UnexpectedToken {
-                line,
                 index,
-                token: super::nth_char(line, index),
+                token: super::nth_char(&line, index),
+                line,
             }
         }
     }
 
     #[derive(Debug)]
-    pub struct InvalidEscape<'a> {
-        line: &'a str,
-        escape: &'a str,
+    pub struct InvalidEscape {
+        line: String,
+        escape: String,
     }
 
-    impl error::Error for InvalidEscape<'_> {}
+    impl error::Error for InvalidEscape {}
 
-    impl Display for InvalidEscape<'_> {
+    impl Display for InvalidEscape {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Invalid escape sequence {} in {}", self.escape, self.line)
         }
     }
 
-    impl<'a> InvalidEscape<'a> {
+    impl InvalidEscape {
         /// Creates a new `InvalidEscape` error
         /// 
         /// # Parameters
@@ -207,8 +207,8 @@ pub mod error_kinds {
         /// 
         /// # Panics
         /// Panics if `escape` is not in `line`
-        pub fn new(line: &'a str, escape: &'a str) -> InvalidEscape<'a> {
-            assert!(line.find(escape).is_some(), "`line` must contain `escape`");
+        pub fn new(line: String, escape: String) -> InvalidEscape {
+            assert!(line.find(&escape).is_some(), "`line` must contain `escape`");
 
             InvalidEscape {
                 line,
@@ -218,20 +218,20 @@ pub mod error_kinds {
     }
 
     #[derive(Debug)]
-    pub struct InvalidIdentifier<'a> {
-        line: &'a str,
-        ident: &'a str,
+    pub struct InvalidIdentifier {
+        line: String,
+        ident: String,
     }
 
-    impl error::Error for InvalidIdentifier<'_> {}
+    impl error::Error for InvalidIdentifier {}
 
-    impl Display for InvalidIdentifier<'_> {
+    impl Display for InvalidIdentifier {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Invalid identifier {} in {}", self.ident, self.line)
         }
     }
 
-    impl<'a> InvalidIdentifier<'a> {
+    impl InvalidIdentifier {
         /// Creates a new `InvalidIdentifier` error
         /// 
         /// # Parameters
@@ -243,9 +243,9 @@ pub mod error_kinds {
         /// Panics
         /// - if `identifier` is valid
         /// - if `identifier` is not in `line`
-        pub fn new(line: &'a str, identifier: &'a str) -> InvalidIdentifier<'a> {
-            assert!(line.find(identifier).is_some(), "`line` must contain `identifier`");
-            assert!(!crate::datas::Identifier::is_valid(identifier), "`identifier` must be an invalid identifier");
+        pub fn new(line: String, identifier: String) -> InvalidIdentifier {
+            assert!(line.find(&identifier).is_some(), "`line` must contain `identifier`");
+            assert!(!crate::datas::Identifier::is_valid(&identifier), "`identifier` must be an invalid identifier");
 
             InvalidIdentifier {
                 line,

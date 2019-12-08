@@ -28,7 +28,7 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
 
                 if FORBIDDEN.contains(&c) || !c.is_ascii() {
                     let escape = crate::dump::dump_str(&format!("{}", c));
-                    let err = Error::ExpectedEscape(error_kinds::ExpectedEscape::new(content, n, escape));
+                    let err = Error::ExpectedEscape(error_kinds::ExpectedEscape::new(String::from(content), n, escape));
                     return Err(err);
                 }
 
@@ -38,7 +38,6 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
             Token::Escape(s) => s,
         };
 
-        let n = next;
         next += escape.len();
 
         match escape.as_str() {
@@ -61,16 +60,16 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
                 let values = &escape[2..];
                 let code = match u32::from_str_radix(values, 16) {
                     Ok(val) => val,
-                    Err(_)  => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(content, &content[n..escape.len() + n]))),
+                    Err(_)  => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(String::from(content), escape))),
                 };
                 let character = match std::char::from_u32(code) {
                     Some(val) => val,
-                    None      => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(content, &content[n..escape.len() + n]))),
+                    None      => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(String::from(content), escape))),
                 };
                 new.push(character);
             },
 
-            _ => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(content, &content[n..escape.len() + n]))),
+            _ => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(String::from(content), escape))),
         }
     }
 
