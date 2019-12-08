@@ -3,7 +3,10 @@
 use std::collections::HashMap;
 use crate::datas::{Identifier, Value};
 use crate::parse;
-use crate::errors::{Error, error_kinds};
+use crate::errors::{Error, error_kinds, ParseFileError};
+use std::path::Path;
+use std::fs::File;
+use std::io::Read;
 
 /// A parser with a local state. Use it by passing it the text to parse line after line
 #[derive(Debug, Clone)]
@@ -174,6 +177,36 @@ fn ignore_comment(line: &str) -> &str {
         }
     
     &line[..end]
+}
+
+/// Reads in an INI file and returns the parsed data
+pub fn parse_file<T: AsRef<Path>>(path: T) -> Result<HashMap<Identifier, Value>, ParseFileError> {
+    let mut file = File::open(path)?;
+
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+    let content = content;
+
+    let mut parser = Parser::new();
+
+    let mut begin = 0;
+    while begin < content.len() {
+        let end = match &content[begin..].find('\n') {
+            Some(val) => val + begin,
+            None      => content.len() - begin,
+        };
+        if begin == end {
+            begin += 1;
+            continue;
+        }
+
+        let line = &content[begin..end];
+        parser.parse_line(line)?;
+
+        begin = end + 1;
+    }
+
+    Ok(parser.data())
 }
 
 

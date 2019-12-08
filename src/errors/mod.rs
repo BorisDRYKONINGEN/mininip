@@ -2,6 +2,7 @@
 
 use std::error;
 use std::fmt::{self, Display};
+use std::io;
 
 #[derive(Debug)]
 pub enum Error {
@@ -252,6 +253,36 @@ pub mod error_kinds {
                 ident: identifier,
             }
         }
+    }
+}
+
+/// Represents either an IO error or a parsing error. Useful when parsing a file which may either produce an IO error or a parsing error
+#[derive(Debug)]
+pub enum ParseFileError {
+    IOError(io::Error),
+    ParseError(Error),
+}
+
+impl error::Error for ParseFileError {}
+
+impl Display for ParseFileError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseFileError::IOError(err)    => write!(f, "{}", err),
+            ParseFileError::ParseError(err) => write!(f, "{}", err),
+        }
+    }
+}
+
+impl From<io::Error> for ParseFileError {
+    fn from(err: io::Error) -> ParseFileError {
+        ParseFileError::IOError(err)
+    }
+}
+
+impl From<Error> for ParseFileError {
+    fn from(err: Error) -> ParseFileError {
+        ParseFileError::ParseError(err)
     }
 }
 
