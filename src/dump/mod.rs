@@ -50,5 +50,8 @@ pub fn dump_str(content: &str) -> String {
 }
 
 
+mod dumper;
+pub use dumper::*;
+
 #[cfg(test)]
 mod tests;
