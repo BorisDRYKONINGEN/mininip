@@ -2,6 +2,10 @@ use crate::{parse, dump, errors};
 use parse::parse_file;
 use errors::ParseFileError;
 use crate::datas::{Identifier, Value};
+use std::collections::HashMap;
+use dump::dump_into_file;
+use std::fs::File;
+use std::io::Read;
 
 #[test]
 fn parse_reverses_dump() {
@@ -57,4 +61,45 @@ fn parse_non_existing_file() {
         Err(ParseFileError::IOError(_)) => {},
         Err(err)                        => panic!("Wrong error value returned: {:?}", err),
     }
+}
+
+#[test]
+fn test_dump_into_file() {
+    let mut data = HashMap::new();
+
+    let insert = &mut |section, ident, val| {
+        let ident = Identifier::new(section, String::from(ident));
+        let val = Value::Raw(String::from(val));
+        data.insert(ident, val);
+    };
+
+    let section = None;
+    insert(section.clone(), "abc", "123");
+    insert(section.clone(), "def", "456");
+    insert(section,         "ghi", "789");
+
+    let section = Some(String::from("maths"));
+    insert(section.clone(), "sum",      "∑");
+    insert(section.clone(), "sqrt",     "√");
+    insert(section,         "infinity", "∞");
+
+    let path = "test dump.ini";
+    dump_into_file(path, data).unwrap();
+
+    let expected = "\
+    abc=123\n\
+    def=456\n\
+    ghi=789\n\
+    \n\
+    [maths]\n\
+    infinity=\\x00221e\n\
+    sqrt=\\x00221a\n\
+    sum=\\x002211\n";
+
+    let mut file = File::open(path)
+        .expect("Created above");
+    let mut content = String::with_capacity(expected.len());
+    file.read_to_string(&mut content).unwrap();
+
+    assert_eq!(content, expected);
 }

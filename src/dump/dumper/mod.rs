@@ -2,6 +2,9 @@
 
 use crate::datas::{Identifier, Value};
 use std::collections::{hash_map, HashMap};
+use std::path::Path;
+use std::fs::File;
+use std::io::{self, Write};
 
 /// A stated object, which from couples of `Identifier` and `Value`, creates a new INI tree, directly dumpable into a new file
 /// Each entry of the `tree` member has for key the section name and for value a list of lines
@@ -60,7 +63,10 @@ impl Dumper {
             result.push_str(&i);
             result.push_str("]\n");
 
-            for j in &self.tree[&Some(i)] {
+            let section = self.tree.get_mut(&Some(i))
+                                   .expect("i is in sections so it is valid");
+            section.sort();
+            for j in section {
                 result.push_str(j);
                 result.push('\n');
             }
@@ -71,6 +77,24 @@ impl Dumper {
         result.pop();
         result
     }
+}
+
+/// Dumps a `HashMap<Identifier, Value>` into a file
+/// 
+/// # Parameters
+/// `path` the path of the file (must be closed)
+/// 
+/// `data` the data to dump
+pub fn dump_into_file<T: AsRef<Path>>(path: T, data: HashMap<Identifier, Value>) -> io::Result<()> {
+    let mut file = File::create(path)?;
+    let mut dumper = Dumper::new();
+
+    for (k, v) in data {
+        dumper.dump(k, v);
+    }
+
+    file.write(dumper.generate().as_bytes())?;
+    Ok(())
 }
 
 
