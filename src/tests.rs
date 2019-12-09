@@ -4,7 +4,7 @@ use errors::ParseFileError;
 use crate::datas::{Identifier, Value};
 use std::collections::HashMap;
 use dump::dump_into_file;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Read;
 
 #[test]
@@ -100,6 +100,11 @@ fn test_dump_into_file() {
         .expect("Created above");
     let mut content = String::with_capacity(expected.len());
     file.read_to_string(&mut content).unwrap();
+
+    std::mem::drop(file);
+    if let Err(err) = fs::remove_file(path) {
+        eprintln!("Error while removing the file: {}", err);
+    }
 
     assert_eq!(content, expected);
 }
