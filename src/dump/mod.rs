@@ -12,11 +12,15 @@
 /// 
 /// More escaped characters may be found at [Wikipedia](https://en.wikipedia.org/wiki/INI_file#Escape_characters "INI file")
 /// 
+/// # The Unicode special case
+/// A non-ASCII character is escaped as a `\x??????` with exactly 6 hexadecimal digits even if a smaller number is suitable
+/// 
 /// # Examples
 /// ```
 /// use mininip::dump::dump_str;
 /// 
 /// assert_eq!(dump_str("a'bc=123;"), r"a\'bc\=123\;");
+/// assert_eq!(dump_str("\u{263a}"),  r"\x00263a");
 /// ```
 pub fn dump_str(content: &str) -> String {
     let mut new = String::with_capacity(content.len());

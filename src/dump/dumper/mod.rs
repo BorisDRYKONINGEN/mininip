@@ -7,9 +7,39 @@ use std::fs::File;
 use std::io::{self, Write};
 
 /// A stated object, which from couples of `Identifier` and `Value`, creates a new INI tree, directly dumpable into a new file
-/// Each entry of the `tree` member has for key the section name and for value a list of lines
+/// 
+/// # Example
+/// ```
+/// use mininip::dump::Dumper;
+/// use mininip::datas::{Identifier, Value};
+/// 
+/// let mut dumper = Dumper::new();
+/// 
+/// let section = None;
+/// let name = String::from("abc");
+/// let abc = Identifier::new(section, name);
+/// let value = Value::Raw(String::from("happy = \u{263a}"));
+/// 
+/// dumper.dump(abc, value);
+/// 
+/// let section = Some(String::from("maths"));
+/// let name = String::from("sum");
+/// let sum = Identifier::new(section, name);
+/// let value = Value::Raw(String::from("\u{3a3}"));
+/// 
+/// dumper.dump(sum, value);
+/// 
+/// let expected = "\
+/// abc=happy \\= \\x00263a\n\
+/// \n\
+/// [maths]\n\
+/// sum=\\x0003a3\n";
+/// 
+/// assert_eq!(dumper.generate(), expected);
+/// ```
 #[derive(Debug)]
 pub struct Dumper {
+    /// The keys of this member are the section names and the values are a list of affectation lines generated
     tree: HashMap<Option<String>, Vec<String>>,
 }
 
@@ -21,7 +51,7 @@ impl Dumper {
         }
     }
 
-    /// Dumps a couple `Identifier` / `Value` into the `Dumper`
+    /// Dumps a couple `Identifier` / `Value` into `self`
     pub fn dump(&mut self, identifier: Identifier, value: Value) {
         let line = format!("{}={}", identifier.name(), value.dump());
 
@@ -85,6 +115,9 @@ impl Dumper {
 /// `path` the path of the file (must be closed)
 /// 
 /// `data` the data to dump
+/// 
+/// # Return value
+/// Since any [`Dumper`](struct.Dumper.html "dump::Dumper") operation is infallible, it only returns an `io::Result<()>` which indicates a file manipulation error
 pub fn dump_into_file<T: AsRef<Path>>(path: T, data: HashMap<Identifier, Value>) -> io::Result<()> {
     let mut file = File::create(path)?;
     let mut dumper = Dumper::new();

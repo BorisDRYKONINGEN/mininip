@@ -4,6 +4,7 @@ use std::error;
 use std::fmt::{self, Display};
 use std::io;
 
+/// Represents a parsing error in the INI format
 #[derive(Debug)]
 pub enum Error {
     ExpectedIdentifier(error_kinds::ExpectedIdentifier),
@@ -34,6 +35,7 @@ pub mod error_kinds {
     use std::error;
     use std::fmt::{self, Display};
 
+    /// A parsing error happening when an identifier is expected but not found
     #[derive(Debug)]
     pub struct ExpectedIdentifier {
         index: usize,
@@ -68,6 +70,7 @@ pub mod error_kinds {
         }
     }
 
+    /// A parsing error happening when an arbitrary token is expected but not found
     #[derive(Debug)]
     pub struct ExpectedToken {
         index: usize,
@@ -106,6 +109,10 @@ pub mod error_kinds {
         }
     }
 
+    /// A parsing error happening when a character should be escaped but is not
+    /// 
+    /// # See
+    /// See [`dump_str`](../../dump/fn.dump_str.html "dump::dump_str") for more informations about escape sequences
     #[derive(Debug)]
     pub struct ExpectedEscape {
         index: usize,
@@ -148,6 +155,7 @@ pub mod error_kinds {
         }
     }
 
+    /// A parsing error happening when an arbitrary token is found where it should not
     #[derive(Debug)]
     pub struct UnexpectedToken {
         index: usize,
@@ -184,6 +192,10 @@ pub mod error_kinds {
         }
     }
 
+    /// A parsing error happening when an escape sequence is not recognised
+    /// 
+    /// # See
+    /// See [`dump_str`](../../dump/fn.dump_str.html "dump::dump_str") for more informations about escape sequences
     #[derive(Debug)]
     pub struct InvalidEscape {
         line: String,
@@ -218,6 +230,10 @@ pub mod error_kinds {
         }
     }
 
+    /// A parsing error happening when an identifier is expected but the expression found is not a valid identifier
+    /// 
+    /// # See
+    /// See [`Identifier::is_valid`](../../datas/struct.Identifier.html#method.is_valid "datas::Identifier::is_valid") to know what is defined as a valid or invalid identifier according to the INI format
     #[derive(Debug)]
     pub struct InvalidIdentifier {
         line: String,
@@ -256,7 +272,9 @@ pub mod error_kinds {
     }
 }
 
-/// Represents either an IO error or a parsing error. Useful when parsing a file which may either produce an IO error or a parsing error
+/// Represents either an IO error or a parsing error
+/// 
+/// Is used by this library in [`parse_file`](../parse/fn.parse_file.html "parse::parse_file") which may encounter an error with the file to parse or with its content
 #[derive(Debug)]
 pub enum ParseFileError {
     IOError(io::Error),

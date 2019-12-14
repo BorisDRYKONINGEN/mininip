@@ -18,7 +18,7 @@ fn value_dump() {
 
 #[test]
 fn value_parse_ok() -> Result<(), ()> {
-    let val = Value::parse_str(r"Hello \x002665").unwrap();
+    let val = Value::parse(r"Hello \x002665").unwrap();
 
     assert_eq!(val, Value::Raw(String::from("Hello \u{2665}")));
     Ok(())
@@ -26,7 +26,7 @@ fn value_parse_ok() -> Result<(), ()> {
 
 #[test]
 fn value_parse_err() {
-    let val = Value::parse_str(r"Hello \p");
+    let val = Value::parse(r"Hello \p");
 
     assert!(val.is_err());
 }

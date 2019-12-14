@@ -1,4 +1,4 @@
-//! Contains the definition of `Parser`
+//! Contains the definition of [`Parser`](struct.Parser.html "parse::Parser")
 
 use std::collections::HashMap;
 use crate::datas::{Identifier, Value};
@@ -9,6 +9,38 @@ use std::fs::File;
 use std::io::Read;
 
 /// A parser with a local state. Use it by passing it the text to parse line after line
+/// 
+/// # Notes
+/// This parser does not work with a file but with lines passed as below. It allows you to parse an INI data from an iterator, a channel, the network...
+/// # Examples
+/// ```
+/// use mininip::parse::Parser;
+/// use mininip::datas::{Identifier, Value};
+/// 
+/// let mut parser = Parser::new();
+/// 
+/// parser.parse_line("abc = 123").unwrap();
+/// parser.parse_line("; comment. A comment may start at an end of line").unwrap();
+/// parser.parse_line("").unwrap(); // empty line
+/// parser.parse_line("[section]").unwrap();
+/// parser.parse_line("def = \\;) \\= \\x00263a ; This is perfectly valid").unwrap();
+/// 
+/// let data = parser.data();
+/// 
+/// let section = None;
+/// let name = String::from("abc");
+/// let abc = Identifier::new(section, name);
+/// 
+/// let value = Value::Raw(String::from("123"));
+/// assert_eq!(data[&abc], value);
+/// 
+/// let section = Some(String::from("section"));
+/// let name = String::from("def");
+/// let def = Identifier::new(section, name);
+/// 
+/// let value = Value::Raw(String::from(";) = \u{263a}"));
+/// assert_eq!(data[&def], value);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Parser {
     variables: HashMap<Identifier, Value>,
@@ -37,7 +69,27 @@ impl Parser {
     /// # Return value
     /// `Ok(())` in case of success
     /// 
-    /// `Err(())` in case of error
+    /// `Err(error)` in case of error with `error` as the error code (see [`Error`](../errors/enum.Error.html "errors::Error"))
+    /// 
+    /// # Examples
+    /// ```rust
+    /// use mininip::parse::Parser;
+    /// use mininip::errors::{Error, error_kinds};
+    /// use mininip::datas::{Identifier, Value};
+    /// 
+    /// let mut parser = Parser::new();
+    /// 
+    /// let good_line = "greeting = Hello \\x00263a";
+    /// parser.parse_line(good_line)
+    ///     .expect("This line is valid");
+    /// 
+    /// let bad_line = "how to greet = Hello \\x00263a";
+    /// match parser.parse_line(bad_line) {
+    ///     Ok(())                             => panic!("This line is invalid and should not be accepted"),
+    ///     Err(Error::InvalidIdentifier(err)) => assert_eq!(format!("{}", err), "Invalid identifier how to greet in how to greet = Hello \\x00263a"),
+    ///     Err(err)                           => panic!("Wrong error returned (got {:?})", err),
+    /// }
+    /// ```
     pub fn parse_line(&mut self, line: &str) -> Result<(), Error> {
         let effective_line = line.trim_start();
 
@@ -49,6 +101,14 @@ impl Parser {
     }
 
     /// Parses an assignment ligne. An assignment is of form
+    /// 
+    /// # Parameters
+    /// `line` the line to parse
+    /// 
+    /// # Return value
+    /// `Ok(())` in case of success
+    /// 
+    /// `Err(error)` in case of error with `error` as the error code
     /// 
     /// ```ini
     /// identifier=value;comment
@@ -92,6 +152,14 @@ impl Parser {
     }
 
     /// Parses a section declaration. A section declaration is of form
+    /// 
+    /// # Parameters
+    /// `line` the line to parse
+    /// 
+    /// # Return value
+    /// `Ok(())` in case of success
+    /// 
+    /// `Err(error)` in case of error with `error` as the error code
     /// 
     /// ```ini
     /// [section];comment
@@ -154,7 +222,7 @@ impl Parser {
 /// Returns a subslice of the given slice which is comment-free (stopped at the first non-escaped semicolon ';'). `line` should be a single line
 /// 
 /// # Panics
-/// Panics if a newline character '\n' is found in line. Note that once the non-escaped semicolon is found, the rest may be not read
+/// Panics if a newline character `'\n'` is found in `line`. Note that once the non-escaped semicolon is found, the rest may be not read
 fn ignore_comment(line: &str) -> &str {
         let mut end = line.len();
         let mut escaped = false;
@@ -180,6 +248,14 @@ fn ignore_comment(line: &str) -> &str {
 }
 
 /// Reads in an INI file and returns the parsed data
+/// 
+/// # Parameters
+/// `path` the path of the file to open
+/// 
+/// # Return value
+/// `Ok(data)` in case of success with `data` as a `HashMap<Identifier, Value>` linking each identifier to its associated value
+/// 
+/// `Err(error)` in case of failure with `error` as an error code for either an I/O error or a parsing error (see [ParseFileError](../errors/enum.ParseFileError.html "errors::ParseFileError"))
 pub fn parse_file<T: AsRef<Path>>(path: T) -> Result<HashMap<Identifier, Value>, ParseFileError> {
     let mut file = File::open(path)?;
 

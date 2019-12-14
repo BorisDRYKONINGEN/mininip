@@ -3,7 +3,7 @@
 use std::iter::Fuse;
 use crate::errors::{Error, error_kinds};
 
-/// Reads a string formatted by `dump_str` and unescapes the escaped characters
+/// Reads a string formatted by [`dump_str`](../dump/fn.dump_str.html "dump::dump_str") and unescapes the escaped characters
 /// 
 /// # Return value
 /// `Ok(string)` with `string` as the result once parsed
@@ -12,6 +12,14 @@ use crate::errors::{Error, error_kinds};
 /// 
 /// # Encoding issues
 /// Only allows ASCII because Unicode or other encodings musn't appear in an INI file (except in comments but this function is not intended to parse whole files)
+/// 
+/// # Examples
+/// ```
+/// use mininip::parse::parse_str;
+/// 
+/// assert!(parse_str("Bad because ends with a ;").is_err());
+/// assert_eq!(parse_str(r"abc\=123\; \x00263a").unwrap(), "abc=123; \u{263a}");
+/// ```
 pub fn parse_str(content: &str) -> Result<String, Error> {
     // new will never be wider than content
     let mut new = String::with_capacity(content.len());
@@ -76,16 +84,19 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
     Ok(new)
 }
 
-/// A token which is either a character or an escape sequence
+/// A token which is either a single character or an escape sequence starting with `\`
 #[derive(PartialEq, Debug)]
 enum Token {
     Char(char),
     Escape(String),
 }
 
-/// An iterator over the characters of an INI file. These characters are NOT TRUSTED, for example, you may receive a `\é` sequence wich is illegal in INI
+/// An iterator over the characters of an INI file
 /// 
-/// Yields `Token`s which can be either a character or an escape sequence.
+/// Yields `Token`s which can be either a character or an escape sequence
+/// 
+/// # Safety
+/// These characters are NOT TRUSTED, for example, you may receive a `\é` sequence wich is illegal in INI
 /// 
 /// If an escape sequence is left unfinished, it is returned as is in a `Token::Escape` object, even though it is invalid
 struct TokenIterator<T> {
