@@ -2,27 +2,36 @@
 
 use std::fmt::{self, Display, Formatter};
 use crate::{parse, dump};
-use crate::errors::Error;
+use crate::errors::{Error, error_kinds::*};
 
 /// The value of a INI variable
 /// 
-/// Currently, there is one single type: the `Raw` type. But in the version 1.1.0, the following types will be available
-/// - `Raw`: the raw content of the file, no formatted. The only computation is that the escaped characters are unescaped (see [parse_str](../parse/fn.parse_str.html "parse::parse_str") to learn more about escaped characters)
-/// - `Str`: a quoted written inside non-escaped quotes like that `"Hello world!"` or that `'Hello world!'`
+/// The following types are available
+/// - `Raw`: the raw content of the file, not formatted. The only computation is that the escaped characters are unescaped (see [parse_str](../parse/fn.parse_str.html "parse::parse_str") to learn more about escaped characters)
+/// - `Str`: a quoted string written inside non-escaped quotes like that `"Hello world!"` or that `'Hello world!'`
 /// - `Int`: a 64 bytes-sized integer
 /// - `Float`: a 64 bytes-sized floating-point number
-/// - `Bool`: a boolean
+/// - `Bool`: a boolean (currently either `on` or `off`)
 /// 
-/// Each type is represented as an enum variant. Since version 1.1.0 or 1.2.0, the deduction of the type when parsing will be automated but you may want to cast it to another, wich will be supported
+/// Each type is represented as an enum variant
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Raw(String),
+    Str(String),
+    Int(i64),
+    Float(f64),
+    Bool(bool),
 }
 
 impl Display for Value {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
-            Value::Raw(string) => string.fmt(formatter),
+            Value::Raw(string)   => string.fmt(formatter),
+            Value::Str(string)   => string.fmt(formatter),
+            Value::Int(number)   => number.fmt(formatter),
+            Value::Float(number) => number.fmt(formatter),
+            Value::Bool(true)    => "on".fmt(formatter),
+            Value::Bool(false)   => "off".fmt(formatter),
         }
     }
 }
@@ -37,11 +46,40 @@ impl Value {
     /// Builds a new [`Value`](enum.Value.html "datas::Value") from `content`, an INI-formatted string
     /// 
     /// # Return value
-    /// `Ok(value)` with `value` as the new object. Note that `value` will always be a `Value::Raw` when calling this method until version 1.1.0 or 1.2.0
+    /// `Ok(value)` with `value` as the new object
     /// 
     /// `Err(error)` when an error occurs while parsing `content` with `error` as the error code
     pub fn parse(content: &str) -> Result<Value, Error> {
-        Ok(Value::Raw(parse::parse_str(content)?))
+        let effective = content.trim();
+
+        if effective.starts_with("'") || effective.starts_with("\"") {
+            let quote = &effective[..1];
+
+            if !effective.ends_with(quote) {
+                let err = ExpectedToken::new(String::from(content), content.len(), String::from(quote));
+                Err(Error::from(err))
+            } else {
+                Ok(Value::Str(parse::parse_str(&effective[1..effective.len() - 1])?))
+            }
+        }
+
+        else if effective == "on" {
+            Ok(Value::Bool(true))
+        } else if effective == "off" {
+            Ok(Value::Bool(false))
+        }
+
+        else if let Ok(value) = effective.parse::<i64>() {
+            Ok(Value::Int(value))
+        }
+
+        else if let Ok(value) = effective.parse::<f64>() {
+            Ok(Value::Float(value))
+        }
+
+        else {
+            Ok(Value::Raw(parse::parse_str(effective)?))
+        }
     }
 
     /// Formats `self` to be dumped in an INI file
@@ -55,26 +93,31 @@ impl Value {
     /// See [`dump_str`](fn.dump_str.html "datas::dump_str") for more informations about this format
     /// 
     /// # Note
-    /// The type of `self` is backed up in a way preserving the type of `self`
+    /// `self` is backed up in a way preserving its type
     /// 
     /// - `Raw` is backed up as is, once escaped
-    /// - `Str` will be backed up with two quotes `'` or `"` around its value once escaped
-    /// - `Int` will be backed up as is
-    /// - `Float` will be backed up as is
-    /// - `Bool` will be backed up as two different values: `true` and `false`
+    /// - `Str` is backed up with two quotes `'` or `"` around its value once escaped
+    /// - `Int` is backed up as is
+    /// - `Float` is backed up as is
+    /// - `Bool` is backed up as two different values: `true` and `false`
     /// 
     /// # Examples
     /// ```
     /// use mininip::datas::Value;
     /// 
-    /// let val = Value::Raw(String::from("très_content=☺ ; the symbol of hapiness"));
+    /// let val = Value::Str(String::from("très_content=☺ ; the symbol of hapiness"));
     /// let dumped = val.dump();
     /// 
-    /// assert_eq!(dumped, "tr\\x0000e8s_content\\=\\x00263a \\; the symbol of hapiness");
+    /// assert_eq!(dumped, "'tr\\x0000e8s_content\\=\\x00263a \\; the symbol of hapiness'"); // Notice the quotes here
     /// ```
     pub fn dump(&self) -> String {
         match self {
-            Value::Raw(string) => format!("{}", dump::dump_str(&string)),
+            Value::Raw(string)   => format!("{}", dump::dump_str(&string)),
+            Value::Str(string)   => format!("'{}'", dump::dump_str(&string)),
+            Value::Int(number)   => format!("{}", number),
+            Value::Float(number) => format!("{}", number),
+            Value::Bool(true)    => String::from("on"),
+            Value::Bool(false)   => String::from("off"),
         }
     }
 }
@@ -121,6 +164,7 @@ impl Identifier {
     /// assert!(!Identifier::is_valid("123_starts_with_a_digit"));
     /// assert!(!Identifier::is_valid("invalid_characters;!\\~"));
     /// assert!(!Identifier::is_valid("é_is_unicode"));
+    /// ```
     pub fn is_valid(ident: &str) -> bool {
         let ident = ident.trim();
 

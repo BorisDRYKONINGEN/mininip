@@ -1,4 +1,5 @@
 use crate::datas::*;
+use crate::errors::Error;
 
 #[test]
 fn value_display() {
@@ -17,11 +18,54 @@ fn value_dump() {
 }
 
 #[test]
-fn value_parse_ok() -> Result<(), ()> {
+fn value_parse_raw() {
     let val = Value::parse(r"Hello \x002665").unwrap();
 
     assert_eq!(val, Value::Raw(String::from("Hello \u{2665}")));
-    Ok(())
+}
+
+#[test]
+fn value_parse_str_ok() {
+    let val = Value::parse(r"'Hello world \x00263a'").unwrap();
+
+    assert_eq!(val, Value::Str(String::from("Hello world \u{263a}")));
+}
+
+#[test]
+fn value_parse_str_unclosed() {
+    match Value::parse("'Hello world") {
+        Ok(_)                        => panic!("This value is invalid and should not be accepted"),
+        Err(Error::ExpectedToken(_)) => {},
+        Err(err)                     => panic!("Invalid error value {:?}", err),
+    }
+}
+
+#[test]
+fn value_parse_int() {
+    let val = Value::parse("666").unwrap();
+
+    assert_eq!(val, Value::Int(666));
+}
+
+#[test]
+fn value_parse_float() {
+    let val = Value::parse("666.0").unwrap();
+
+    assert_eq!(val, Value::Float(666.0));
+}
+
+#[test]
+fn value_parse_bool_on() {
+    let val = Value::parse("on").unwrap();
+
+    assert_eq!(val, Value::Bool(true));
+}
+
+#[test]
+fn value_parse_bool_off() {
+    let val = Value::parse("off").unwrap();
+
+    assert_eq!(val, Value::Bool(false));
 }
 
 #[test]

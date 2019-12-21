@@ -2,8 +2,7 @@
 
 use std::collections::HashMap;
 use crate::datas::{Identifier, Value};
-use crate::parse;
-use crate::errors::{Error, error_kinds, ParseFileError};
+use crate::errors::{Error, error_kinds::*, ParseFileError};
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
@@ -23,7 +22,7 @@ use std::io::Read;
 /// parser.parse_line("; comment. A comment may start at an end of line").unwrap();
 /// parser.parse_line("").unwrap(); // empty line
 /// parser.parse_line("[section]").unwrap();
-/// parser.parse_line("def = \\;) \\= \\x00263a ; This is perfectly valid").unwrap();
+/// parser.parse_line("def = '\\;) \\= \\x00263a' ; This is perfectly valid").unwrap();
 /// 
 /// let data = parser.data();
 /// 
@@ -31,14 +30,14 @@ use std::io::Read;
 /// let name = String::from("abc");
 /// let abc = Identifier::new(section, name);
 /// 
-/// let value = Value::Raw(String::from("123"));
+/// let value = Value::Int(123);
 /// assert_eq!(data[&abc], value);
 /// 
 /// let section = Some(String::from("section"));
 /// let name = String::from("def");
 /// let def = Identifier::new(section, name);
 /// 
-/// let value = Value::Raw(String::from(";) = \u{263a}"));
+/// let value = Value::Str(String::from(";) = \u{263a}"));
 /// assert_eq!(data[&def], value);
 /// ```
 #[derive(Debug, Clone)]
@@ -102,6 +101,10 @@ impl Parser {
 
     /// Parses an assignment ligne. An assignment is of form
     /// 
+    /// ```ini
+    /// identifier=value;comment
+    /// ```
+    /// 
     /// # Parameters
     /// `line` the line to parse
     /// 
@@ -109,10 +112,6 @@ impl Parser {
     /// `Ok(())` in case of success
     /// 
     /// `Err(error)` in case of error with `error` as the error code
-    /// 
-    /// ```ini
-    /// identifier=value;comment
-    /// ```
     fn parse_assignment(&mut self, line: &str) -> Result<(), Error> {
         // Getting the expression of `identifier` in "`identifier` = `value`[;comment]"
         let equal = match line.find('=') {
@@ -126,7 +125,7 @@ impl Parser {
                     None        => effective_line.len(),
                 };
 
-                return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(String::from(line), end_of_ident + leading_spaces, String::from("="))));
+                return Err(Error::from(ExpectedToken::new(String::from(line), end_of_ident + leading_spaces, String::from("="))));
             }
         };
 
@@ -140,18 +139,22 @@ impl Parser {
         };
 
         if !Identifier::is_valid(&identifier) {
-            return Err(Error::InvalidIdentifier(error_kinds::InvalidIdentifier::new(String::from(line), identifier)));
+            return Err(Error::from(InvalidIdentifier::new(String::from(line), identifier)));
         }
-        let value = parse::parse_str(value)?;
+        let value = Value::parse(value)?;
 
         self.variables.insert(
             Identifier::new(self.cur_section.clone(), identifier),
-            Value::Raw(value),
+            value,
         );
         Ok(())
     }
 
     /// Parses a section declaration. A section declaration is of form
+    /// 
+    /// ```ini
+    /// [section];comment
+    /// ```
     /// 
     /// # Parameters
     /// `line` the line to parse
@@ -160,10 +163,6 @@ impl Parser {
     /// `Ok(())` in case of success
     /// 
     /// `Err(error)` in case of error with `error` as the error code
-    /// 
-    /// ```ini
-    /// [section];comment
-    /// ```
     /// 
     /// # Panics
     /// Panics if line doesn't start with a `[` character, which indicates `line` is not a section declaration but may is a valid INI instruction. In this way, we can't return an error expecting a `[` at the beginning of the line, which doesn't make any sense
@@ -190,14 +189,14 @@ impl Parser {
 
         // end == 0 means that there isn't any ']' while end == 1 means that the section name is empty
         if end == 0 {
-            return Err(Error::ExpectedToken(error_kinds::ExpectedToken::new(String::from(line), leading_spaces, String::from("]"))));
+            return Err(Error::from(ExpectedToken::new(String::from(line), leading_spaces, String::from("]"))));
         } else if end == 1 {
-            return Err(Error::ExpectedIdentifier(error_kinds::ExpectedIdentifier::new(String::from(line), leading_spaces + 1)));
+            return Err(Error::from(ExpectedIdentifier::new(String::from(line), leading_spaces + 1)));
         }
 
         let section = &line[1..end];
         if !Identifier::is_valid(section) {
-            return Err(Error::InvalidIdentifier(error_kinds::InvalidIdentifier::new(String::from(line), String::from(section))));
+            return Err(Error::from(InvalidIdentifier::new(String::from(line), String::from(section))));
         }
 
         // Checking integrity: I want to ensure there is no extra character after the section declaration
@@ -207,10 +206,10 @@ impl Parser {
                 break;
             } else if !i.is_whitespace() {
                 let line = String::from(line);
-                return Err(Error::UnexpectedToken(error_kinds::UnexpectedToken::new(line, leading_spaces // The leading spaces ignored
-                                                                                         + 2             // The '[' and ']' characters
-                                                                                         + section.len() // The identifier
-                                                                                         + n)));         // The index after the ']' character
+                return Err(Error::from(UnexpectedToken::new(line, leading_spaces // The leading spaces ignored
+                                                                               + 2             // The '[' and ']' characters
+                                                                               + section.len() // The identifier
+                                                                               + n)));         // The index after the ']' character
             }
         }
 

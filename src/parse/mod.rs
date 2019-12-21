@@ -1,7 +1,7 @@
 //! Provides tools to parse an INI file
 
 use std::iter::Fuse;
-use crate::errors::{Error, error_kinds};
+use crate::errors::{Error, error_kinds::*};
 
 /// Reads a string formatted by [`dump_str`](../dump/fn.dump_str.html "dump::dump_str") and unescapes the escaped characters
 /// 
@@ -36,7 +36,7 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
 
                 if FORBIDDEN.contains(&c) || !c.is_ascii() {
                     let escape = crate::dump::dump_str(&format!("{}", c));
-                    let err = Error::ExpectedEscape(error_kinds::ExpectedEscape::new(String::from(content), n, escape));
+                    let err = Error::from(ExpectedEscape::new(String::from(content), n, escape));
                     return Err(err);
                 }
 
@@ -68,16 +68,16 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
                 let values = &escape[2..];
                 let code = match u32::from_str_radix(values, 16) {
                     Ok(val) => val,
-                    Err(_)  => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(String::from(content), escape))),
+                    Err(_)  => return Err(Error::from(InvalidEscape::new(String::from(content), escape))),
                 };
                 let character = match std::char::from_u32(code) {
                     Some(val) => val,
-                    None      => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(String::from(content), escape))),
+                    None      => return Err(Error::from(InvalidEscape::new(String::from(content), escape))),
                 };
                 new.push(character);
             },
 
-            _ => return Err(Error::InvalidEscape(error_kinds::InvalidEscape::new(String::from(content), escape))),
+            _ => return Err(Error::from(InvalidEscape::new(String::from(content), escape))),
         }
     }
 

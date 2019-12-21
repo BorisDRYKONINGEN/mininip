@@ -32,12 +32,12 @@ fn parse_good_file() {
 
     println!("{:?}", data);
 
-    assert_eq!(data[&author], Value::Raw(String::from("Boris DRYKONINGEN")));
-    assert_eq!(data[&version_major], Value::Raw(String::from("0")));
+    assert_eq!(data[&author], Value::Str(String::from("Boris DRYKONINGEN")));
+    assert_eq!(data[&version_major], Value::Int(0));
 
-    assert_eq!(data[&one], Value::Raw(String::from("1")));
-    assert_eq!(data[&two], Value::Raw(String::from("2")));
-    assert_eq!(data[&three], Value::Raw(String::from("3")));
+    assert_eq!(data[&one], Value::Int(1));
+    assert_eq!(data[&two], Value::Int(2));
+    assert_eq!(data[&three], Value::Int(3));
 
     assert_eq!(data[&smiley], Value::Raw(String::from("\u{263a}")));
     assert_eq!(data[&semicolon], Value::Raw(String::from(";")));
@@ -69,19 +69,18 @@ fn test_dump_into_file() {
 
     let insert = &mut |section, ident, val| {
         let ident = Identifier::new(section, String::from(ident));
-        let val = Value::Raw(String::from(val));
         data.insert(ident, val);
     };
 
     let section = None;
-    insert(section.clone(), "abc", "123");
-    insert(section.clone(), "def", "456");
-    insert(section,         "ghi", "789");
+    insert(section.clone(), "abc", Value::Int(123));
+    insert(section.clone(), "def", Value::Int(456));
+    insert(section,         "ghi", Value::Int(789));
 
     let section = Some(String::from("maths"));
-    insert(section.clone(), "sum",      "∑");
-    insert(section.clone(), "sqrt",     "√");
-    insert(section,         "infinity", "∞");
+    insert(section.clone(), "sum",      Value::Str(String::from("∑")));
+    insert(section.clone(), "sqrt",     Value::Str(String::from("√")));
+    insert(section,         "infinity", Value::Str(String::from("∞")));
 
     let path = "test dump.ini";
     dump_into_file(path, data).unwrap();
@@ -92,9 +91,9 @@ fn test_dump_into_file() {
     ghi=789\n\
     \n\
     [maths]\n\
-    infinity=\\x00221e\n\
-    sqrt=\\x00221a\n\
-    sum=\\x002211\n";
+    infinity='\\x00221e'\n\
+    sqrt='\\x00221a'\n\
+    sum='\\x002211'\n";
 
     let mut file = File::open(path)
         .expect("Created above");

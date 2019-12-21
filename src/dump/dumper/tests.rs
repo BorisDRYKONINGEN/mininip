@@ -15,27 +15,23 @@ fn dumper_without_globals() {
     let e = Identifier::new(def.clone(), String::from("e"));
     let f = Identifier::new(def,         String::from("f"));
 
-    let dump = &mut |ident, val| {
-        dumper.dump(ident, Value::Raw(String::from(val)));
-    };
-
-    dump(a, "1");
-    dump(b, "2");
-    dump(c, "3");
-    dump(d, "4");
-    dump(e, "5");
-    dump(f, "6");
+    dumper.dump(a, Value::Int(1));
+    dumper.dump(b, Value::Float(3.1415926535));
+    dumper.dump(c, Value::Bool(true));
+    dumper.dump(d, Value::Bool(false));
+    dumper.dump(e, Value::Str(String::from("5")));
+    dumper.dump(f, Value::Raw(String::from("abc")));
 
     let expected = "\
     [abc]\n\
     a=1\n\
-    b=2\n\
-    c=3\n\
+    b=3.1415926535\n\
+    c=on\n\
     \n\
     [def]\n\
-    d=4\n\
-    e=5\n\
-    f=6\n";
+    d=off\n\
+    e='5'\n\
+    f=abc\n";
 
     assert_eq!(expected, dumper.generate());
 }
@@ -53,26 +49,22 @@ fn dumper_with_globals() {
     let e = Identifier::new(def.clone(), String::from("e"));
     let f = Identifier::new(def,         String::from("f"));
 
-    let dump = &mut |ident, val| {
-        dumper.dump(ident, Value::Raw(String::from(val)));
-    };
-
-    dump(a, "1");
-    dump(b, "2");
-    dump(c, "3");
-    dump(d, "4");
-    dump(e, "5");
-    dump(f, "6");
+    dumper.dump(a, Value::Int(1));
+    dumper.dump(b, Value::Float(3.1415926535));
+    dumper.dump(c, Value::Bool(true));
+    dumper.dump(d, Value::Bool(false));
+    dumper.dump(e, Value::Str(String::from("5")));
+    dumper.dump(f, Value::Raw(String::from("abc")));
 
     let expected = "\
     a=1\n\
-    b=2\n\
-    c=3\n\
+    b=3.1415926535\n\
+    c=on\n\
     \n\
     [def]\n\
-    d=4\n\
-    e=5\n\
-    f=6\n";
+    d=off\n\
+    e='5'\n\
+    f=abc\n";
 
     assert_eq!(expected, dumper.generate());
 }

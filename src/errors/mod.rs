@@ -30,6 +30,42 @@ impl Display for Error {
     }
 }
 
+impl From<error_kinds::ExpectedIdentifier> for Error {
+    fn from(src: error_kinds::ExpectedIdentifier) -> Error {
+        Error::ExpectedIdentifier(src)
+    }
+}
+
+impl From<error_kinds::ExpectedToken> for Error {
+    fn from(src: error_kinds::ExpectedToken) -> Error {
+        Error::ExpectedToken(src)
+    }
+}
+
+impl From<error_kinds::ExpectedEscape> for Error {
+    fn from(src: error_kinds::ExpectedEscape) -> Error {
+        Error::ExpectedEscape(src)
+    }
+}
+
+impl From<error_kinds::UnexpectedToken> for Error {
+    fn from(src: error_kinds::UnexpectedToken) -> Error {
+        Error::UnexpectedToken(src)
+    }
+}
+
+impl From<error_kinds::InvalidEscape> for Error {
+    fn from(src: error_kinds::InvalidEscape) -> Error {
+        Error::InvalidEscape(src)
+    }
+}
+
+impl From<error_kinds::InvalidIdentifier> for Error {
+    fn from(src: error_kinds::InvalidIdentifier) -> Error {
+        Error::InvalidIdentifier(src)
+    }
+}
+
 /// Contains all the error types used in `Error`'s variants
 pub mod error_kinds {
     use std::error;
@@ -61,7 +97,7 @@ pub mod error_kinds {
         /// # Panics
         /// Panics if index is too big
         pub fn new(line: String, index: usize) -> ExpectedIdentifier {
-            assert!(line.len() > index, "`index` must be a valid index in `line`");
+            assert!(line.len() >= index, "`index` must be a valid index in `line`");
 
             ExpectedIdentifier {
                 line,
@@ -99,7 +135,7 @@ pub mod error_kinds {
         /// # Panics
         /// Panics if `index` is too big
         pub fn new(line: String, index: usize, tokens: String) -> ExpectedToken {
-            assert!(line.len() > index, "`index` must be a valid index");
+            assert!(line.len() >= index, "`index` must be a valid index");
 
             ExpectedToken {
                 line,
@@ -309,7 +345,7 @@ impl From<Error> for ParseFileError {
 /// # Panics
 /// Panics if `index` is out of range or between two bytes of the same character
 fn nth_char(string: &str, index: usize) -> char {
-    assert!(string.len() > index, "`index` must be a valid index in `string`");
+    assert!(string.len() >= index, "`index` must be a valid index in `string`");
 
     let mut token = '\0';
     let mut last_n = 0;

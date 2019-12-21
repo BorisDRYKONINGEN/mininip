@@ -6,7 +6,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{self, Write};
 
-/// A stated object, which from couples of `Identifier` and `Value`, creates a new INI tree, directly dumpable into a new file
+/// A stated object, which from couples of [`Identifier`](../datas/struct.Identifier.html "datas::Identifier") and [`Value`](../datas/enum.Value.html "datas::Value"), creates a new INI tree, directly dumpable into a new file
 /// 
 /// # Example
 /// ```
@@ -51,7 +51,7 @@ impl Dumper {
         }
     }
 
-    /// Dumps a couple `Identifier` / `Value` into `self`
+    /// Dumps a couple [`Identifier`](../datas/struct.Identifier.html "datas::Identifier") / [`Value`](../datas/enum.Value.html "datas::Value") into `self`
     pub fn dump(&mut self, identifier: Identifier, value: Value) {
         let line = format!("{}={}", identifier.name(), value.dump());
 

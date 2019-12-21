@@ -87,6 +87,62 @@ fn parser_parse_assignment_unicode_comment() {
 }
 
 #[test]
+fn parser_parse_assignment_str() {
+    let expr = "ident='Hello world!'";
+    let mut parser = Parser::new();
+
+    parser.parse_assignment(expr)
+        .expect("This code should be accepted because it's a valid INI assignment");
+
+    let data = parser.data();
+    let key = Identifier::new(None, String::from("ident"));
+    let val = Value::Str(String::from("Hello world!"));
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_assignment_int() {
+    let expr = "ident=0";
+    let mut parser = Parser::new();
+
+    parser.parse_assignment(expr)
+        .expect("This code should be accepted because it's a valid INI assignment");
+
+    let data = parser.data();
+    let key = Identifier::new(None, String::from("ident"));
+    let val = Value::Int(0);
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_assignment_float() {
+    let expr = "ident=0.0";
+    let mut parser = Parser::new();
+
+    parser.parse_assignment(expr)
+        .expect("This code should be accepted because it's a valid INI assignment");
+
+    let data = parser.data();
+    let key = Identifier::new(None, String::from("ident"));
+    let val = Value::Float(0.0);
+    assert_eq!(data[&key], val);
+}
+
+#[test]
+fn parser_parse_assignment_bool() {
+    let expr = "ident=on";
+    let mut parser = Parser::new();
+
+    parser.parse_assignment(expr)
+        .expect("This code should be accepted because it's a valid INI assignment");
+
+    let data = parser.data();
+    let key = Identifier::new(None, String::from("ident"));
+    let val = Value::Bool(true);
+    assert_eq!(data[&key], val);
+}
+
+#[test]
 fn parser_parse_assignment_unicode_identifier() {
     let expr = r"é=\x0000e9";
     let mut parser = Parser::new();
