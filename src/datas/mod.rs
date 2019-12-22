@@ -161,13 +161,13 @@ impl Identifier {
     /// assert!(Identifier::is_valid("identifier"));
     /// assert!(Identifier::is_valid("digits1230"));
     /// assert!(Identifier::is_valid("UPPERCASE_AND_UNDERSCORES"));
+    /// assert!(Identifier::is_valid("contains spaces inside"));
     /// assert!(!Identifier::is_valid("123_starts_with_a_digit"));
     /// assert!(!Identifier::is_valid("invalid_characters;!\\~"));
     /// assert!(!Identifier::is_valid("é_is_unicode"));
+    /// assert!(!Identifier::is_valid(" starts_with_a_space"));
     /// ```
     pub fn is_valid(ident: &str) -> bool {
-        let ident = ident.trim();
-
         let mut iter = ident.chars();
         match iter.next() {
             // An empty string is not allowed
@@ -180,7 +180,7 @@ impl Identifier {
         }
 
         for i in iter {
-            // The following ones may be numeric characters
+            // The following ones may be numeric characters, underscores, tildes, dashs or spaces
             if !i.is_ascii() || !i.is_alphanumeric()
                              && i != '_' && i != '~' 
                              && i != '-' && i != '.'

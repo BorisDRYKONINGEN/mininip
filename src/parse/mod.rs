@@ -84,6 +84,7 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
     Ok(new)
 }
 
+
 /// A token which is either a single character or an escape sequence starting with `\`
 #[derive(PartialEq, Debug)]
 enum Token {
@@ -142,6 +143,44 @@ impl<T: Iterator<Item = char>> Iterator for TokenIterator<T> {
             return Some(Token::Escape(escape_seq));
         }
     }
+}
+
+
+/// Finds the first non-escaped occurence of `pattern` in `string`
+/// . Currently only accepts `char`s
+/// 
+/// # Return value
+/// `Some(index)` with `index` as the index of the first occurence of `pattern`
+/// 
+/// `None` if `pattern` could not be found as a non-escaped form
+pub fn find_unescaped(string: &str, pattern: char) -> Option<usize> {
+    // possible values of `escape`
+    // -1   : the last character parsed is a '\\'
+    // 0    : this character must be read because it's unescaped
+    // 1..6 : this character must be ignored because it belongs to an escape sequence
+    let mut escape = 0;
+    for (n, i) in string.char_indices() {
+        if escape == -1 {
+            escape = if i == 'x' {
+                6
+            } else {
+                0
+            };
+        }
+
+        else if escape > 0 {
+            escape -= 1;
+        }
+
+        // Since here, escape = 0 so the character must be parsed
+        else if i == '\\' {
+            escape = -1;
+        } else if i == pattern {
+            return Some(n);
+        }
+    }
+
+    None
 }
 
 

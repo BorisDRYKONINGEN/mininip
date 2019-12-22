@@ -117,15 +117,9 @@ impl Parser {
         let equal = match line.find('=') {
             Some(index) => index,
             None        => {
-                let effective_line = line.trim_start();
-                let leading_spaces = line.len() - effective_line.len();
+                let end_of_ident = line.trim_end().len();
 
-                let end_of_ident = match effective_line.find(char::is_whitespace) {
-                    Some(index) => index,
-                    None        => effective_line.len(),
-                };
-
-                return Err(Error::from(ExpectedToken::new(String::from(line), end_of_ident + leading_spaces, String::from("="))));
+                return Err(Error::from(ExpectedToken::new(String::from(line), end_of_ident, String::from("="))));
             }
         };
 
@@ -167,17 +161,17 @@ impl Parser {
     /// # Panics
     /// Panics if line doesn't start with a `[` character, which indicates `line` is not a section declaration but may is a valid INI instruction. In this way, we can't return an error expecting a `[` at the beginning of the line, which doesn't make any sense
     fn parse_section(&mut self, line: &str) -> Result<(), Error> {
-        let initial_line = line;
-        let line = line.trim_start();
-        let leading_spaces = initial_line.len() - line.len();
-
         let mut iter = line.char_indices();
-        match iter.next() {
-            None => panic!("An INI section declaration starts with `[`. {} does not, which means the parser did not call the right function", line),
-            Some((_, c)) => if c != '[' {
-                panic!("An INI section declaration starts with `[`. {} does not, which means the parser did not call the right function", line);
-            },
-        }
+        let leading_spaces = loop {
+            match iter.next() {
+                None => panic!("An INI section declaration starts with `[`. {} does not, which means the parser did not call the right function", line),
+                Some((n, c)) => if c == '[' {
+                    break n;
+                } else if !c.is_whitespace() {
+                    panic!("An INI section declaration starts with `[`. {} does not, which means the parser did not call the right function", line);
+                },
+            }
+        };
 
         let mut end = 0;
         for (n, i) in iter.by_ref() {
@@ -194,7 +188,7 @@ impl Parser {
             return Err(Error::from(ExpectedIdentifier::new(String::from(line), leading_spaces + 1)));
         }
 
-        let section = &line[1..end];
+        let section = &line[leading_spaces + 1..end];
         if !Identifier::is_valid(section) {
             return Err(Error::from(InvalidIdentifier::new(String::from(line), String::from(section))));
         }
@@ -206,10 +200,10 @@ impl Parser {
                 break;
             } else if !i.is_whitespace() {
                 let line = String::from(line);
-                return Err(Error::from(UnexpectedToken::new(line, leading_spaces // The leading spaces ignored
-                                                                               + 2             // The '[' and ']' characters
-                                                                               + section.len() // The identifier
-                                                                               + n)));         // The index after the ']' character
+                return Err(Error::from(UnexpectedToken::new(line, leading_spaces  // The leading spaces ignored
+                                                                  + 2             // The '[' and ']' characters
+                                                                  + section.len() // The identifier
+                                                                  + n)));         // The index after the ']' character
             }
         }
 
@@ -219,31 +213,8 @@ impl Parser {
 }
 
 /// Returns a subslice of the given slice which is comment-free (stopped at the first non-escaped semicolon ';'). `line` should be a single line
-/// 
-/// # Panics
-/// Panics if a newline character `'\n'` is found in `line`. Note that once the non-escaped semicolon is found, the rest may be not read
-fn ignore_comment(line: &str) -> &str {
-        let mut end = line.len();
-        let mut escaped = false;
-
-        for (n, i) in line.char_indices() {
-            assert_ne!(i, '\n', "Found newline character which was not expected");
-
-            if escaped {
-                escaped = false;
-
-                continue;
-            }
-
-            if i == '\\' {
-                escaped = true;
-            } else if i == ';' {
-                end = n;
-                break;
-            }
-        }
-    
-    &line[..end]
+fn ignore_comment(line: &str) -> &str { 
+    &line[..super::find_unescaped(line, ';').unwrap_or(line.len())]
 }
 
 /// Reads in an INI file and returns the parsed data
@@ -268,7 +239,7 @@ pub fn parse_file<T: AsRef<Path>>(path: T) -> Result<HashMap<Identifier, Value>,
     while begin < content.len() {
         let end = match &content[begin..].find('\n') {
             Some(val) => val + begin,
-            None      => content.len() - begin,
+            None      => content.len(),
         };
         if begin == end {
             begin += 1;

@@ -112,3 +112,31 @@ fn parse_str_forbidden_unicode() {
         Err(err)                      => panic!("Wrong return value: {:?}", err),
     }
 }
+
+#[test]
+fn find_unescaped_found() {
+    let sequence = "abc";
+
+    assert_eq!(Some(2), find_unescaped(sequence, 'c'));
+}
+
+#[test]
+fn find_unescaped_ignore_simple_escape() {
+    let sequence = "ab\\;cd;";
+
+    assert_eq!(Some(6), find_unescaped(sequence, ';'));
+}
+
+#[test]
+fn find_unescaped_ignore_unicode_escape() {
+    let sequence = "ab\\x00263a0";
+
+    assert_eq!(Some(10), find_unescaped(sequence, '0'));
+}
+
+#[test]
+fn find_unescaped_not_found() {
+    let sequence = "abcd";
+
+    assert_eq!(None, find_unescaped(sequence, 'e'));
+}
