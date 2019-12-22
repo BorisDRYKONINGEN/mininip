@@ -96,7 +96,7 @@ fn identifier_new_none() {
 #[test]
 #[should_panic]
 fn identifier_new_panics() {
-    let section = Some(String::from("Hello world"));
+    let section = Some(String::from("-Bad section name"));
     let variable = String::from("regular_name");
     let _ident = Identifier::new(section, variable);
 }
@@ -106,9 +106,11 @@ fn identifier_is_valid_full_test() {
     assert!(Identifier::is_valid("UPPERCASE_ONE"));
     assert!(Identifier::is_valid("lowercase_one"));
     assert!(Identifier::is_valid("alpha_numeric_42"));
+    assert!(Identifier::is_valid("Contains spaces"));
+    assert!(Identifier::is_valid("$is-valid_since:version~1.2.0"));
     assert!(!Identifier::is_valid("42_starts_with_a_digit"));
-    assert!(!Identifier::is_valid("Non numeric nor alphabetic character"));
     assert!(!Identifier::is_valid("Non_ascii_character_\u{263a}"));
+    assert!(!Identifier::is_valid("invalid_character="));
     assert!(!Identifier::is_valid(""));
 }
 
@@ -124,7 +126,7 @@ fn identifier_change_section_ok() {
 fn identifier_change_section_err() {
     let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
 
-    ident.change_section(Some(String::from("Invalid one")));
+    ident.change_section(Some(String::from("Inv@lid one")));
 }
 
 #[test]
@@ -146,7 +148,7 @@ fn identifier_change_name_ok() {
 fn identifier_change_name_err() {
     let mut ident = Identifier::new(Some(String::from("Section")), String::from("Variable"));
 
-    ident.change_name(String::from("Invalid one"));
+    ident.change_name(String::from("Inv@lid one"));
 }
 
 #[test]

@@ -156,7 +156,7 @@ fn parser_parse_assignment_unicode_identifier() {
 
 #[test]
 fn parser_parse_assignment_bad_ident() {
-    let expr = "my identifier=val";
+    let expr = "my*identifier=val";
     let mut parser = Parser::new();
 
     match parser.parse_assignment(expr) {

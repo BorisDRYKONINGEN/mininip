@@ -82,10 +82,10 @@ impl Parser {
     /// parser.parse_line(good_line)
     ///     .expect("This line is valid");
     /// 
-    /// let bad_line = "how to greet = Hello \\x00263a";
+    /// let bad_line = "how to greet? = Hello \\x00263a";
     /// match parser.parse_line(bad_line) {
     ///     Ok(())                             => panic!("This line is invalid and should not be accepted"),
-    ///     Err(Error::InvalidIdentifier(err)) => assert_eq!(format!("{}", err), "Invalid identifier how to greet in how to greet = Hello \\x00263a"),
+    ///     Err(Error::InvalidIdentifier(err)) => assert_eq!(format!("{}", err), "Invalid identifier how to greet? in how to greet? = Hello \\x00263a"),
     ///     Err(err)                           => panic!("Wrong error returned (got {:?})", err),
     /// }
     /// ```

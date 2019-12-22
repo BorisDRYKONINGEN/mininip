@@ -149,7 +149,7 @@ impl Identifier {
 
     /// Returns `true` if the given string is a valid identifier and `false` otherwise
     /// 
-    /// A valid identifier is defined as a string of alphanumeric characters and underscore `_` **not** starting with a numeric one. All of these characters must be ASCII
+    /// A valid identifier is defined as a string of latin alphanumeric characters and any of `_`, `~`, `-`, `.`, `:`, `$` and space starting with a latin alphabetic one or any of `.`, `$` or `:`. All of these characters must be ASCII
     /// 
     /// # Notes
     /// Since the INI file format is not really normalized, this definition may evolve in the future. In fact, I will avoid when possible to make a stronger rule, in order to keep backward compatibility
@@ -173,15 +173,19 @@ impl Identifier {
             // An empty string is not allowed
             None    => return false,
 
-            // The first character must be a letter
-            Some(c) => if !c.is_ascii() || !c.is_alphabetic() {
+            // The first character must be a letter, a point, a dollar sign or a colon
+            Some(c) => if !c.is_ascii() || !c.is_alphabetic() && c != '.' && c != '$' && c != ':' {
                 return false;
             },
         }
 
         for i in iter {
             // The following ones may be numeric characters
-            if !i.is_ascii() || !i.is_alphanumeric() && i != '_' {
+            if !i.is_ascii() || !i.is_alphanumeric()
+                             && i != '_' && i != '~' 
+                             && i != '-' && i != '.'
+                             && i != ':' && i != '$'
+                             && i != ' ' {
                 return false;
             }
         }
