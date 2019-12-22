@@ -30,6 +30,11 @@ fn parse_good_file() {
     let smiley = Identifier::new(symbols.clone(), String::from("smiley"));
     let semicolon = Identifier::new(symbols, String::from("semicolon"));
 
+    let valid_since_1_2_0 = Some(String::from("valid since 1.2.0"));
+    let contains_spaces = Identifier::new(valid_since_1_2_0.clone(), String::from("contains spaces"));
+    let starts_with_dollar = Identifier::new(valid_since_1_2_0.clone(), String::from("$starts-with-$"));
+    let contains_colon = Identifier::new(valid_since_1_2_0, String::from("contains:"));
+
     println!("{:?}", data);
 
     assert_eq!(data[&author], Value::Str(String::from("Boris DRYKONINGEN")));
@@ -41,6 +46,10 @@ fn parse_good_file() {
 
     assert_eq!(data[&smiley], Value::Raw(String::from("\u{263a}")));
     assert_eq!(data[&semicolon], Value::Raw(String::from(";")));
+
+    assert_eq!(data[&contains_spaces], Value::Bool(true));
+    assert_eq!(data[&starts_with_dollar], Value::Bool(true));
+    assert_eq!(data[&contains_colon], Value::Bool(true));
 }
 
 #[test]
