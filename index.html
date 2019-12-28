@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> MinIniP: a Minimalist INI Parser </title>
+    </head>
+
+    <body>
+        <header>
+            <ul class="related-links">
+                <li> <a href="https://github.com/BorisDRYKONINGEN/mininip"> Repository </a> </li>
+                <li> <a href="target/doc/mininip/index.html"> API reference </a> </li>
+                <li> <a href="mailto:boris.d@orange.fr"> Contact me </a> </li>
+            </ul>
+        </header>
+
+
+        <h1> MinIniP </h1>
+        <main>
+            <h2> What is MinIniP ? </h2>
+
+            <article>
+                <h3> Presentation </h3>
+                <p>
+                    <strong> MinIniP </strong> stands for <q> Minimalist <abbr title="Initialization files"> INI </abbr> Parser </q>.
+                    It is a parser written in Rust to store datas in an easy and safe way. Currently, it is not intended to be extremly
+                    fast and there is not any benchmark of it. You can use it like you want in any project. Every change to one of the
+                    provided files must be published under the <abbr title="Mozilla Public License 2.0"> MPL-2.0 </abbr>.
+                </p>
+            </article>
+
+            <article>
+                <h3> Why MinIniP ? </h3>
+                <p>
+                    Honnestly, there is not any particular reason to chose MinIniP. I just wrote it to play with Rust which I learn a few
+                    months ago. I will use it in my personnal projects so it will be actively maintained for a long time.
+                </p>
+            </article>
+
+            <article>
+                <h3> You convinced me ! How to use it ? </h3>
+                <p>
+                    Just add
+                </p>
+                <pre><code>mininip="1.2"</code></pre>
+                <p>
+                    to your <code> Cargo.toml </code> in the <code> dependencies </code> section and you are right ! You can also download
+                    it at <a href="https://github.com/BorisDRYKONINGEN/mininip"> the official repository </a>.
+                </p>
+            </article>
+        </main>
+
+        <section>
+            <h2> What is a valid INI file ? </h2>
+
+            <article>
+                <h3> A lack of standardisation </h3>
+
+                <p>
+                    Since there is not any standard INI specification, each implementor writes its own. Here is mine. You can contribute to
+                    the project by extending this specification if you think something is missing. The only rule to follow is to not break
+                    backward compatibility, except in one case : adding a new INI types may break some use cases of the <code> Raw </code>
+                    type by moving a declaration of variable to the new type.
+                </p>
+                <p>
+                    For instance, you may create a <code> Set </code> INI type which is like the sets in maths, and is enclosed by curly
+                    braces <code> {} </code>. In this way, parsing this line
+                </p>
+                <pre><code>a INI key = { Hello, world, ! }</code></pre>
+                <p>
+                    Will no longer produce a <code>Value::Raw</code> value when parsing it but a <code>Value::Set</code> instead.
+                </p>
+            </article>
+
+            <article>
+                <h3> The specification followed by MinIniP </h3>
+
+                <h4> Identifiers </h4>
+                <p>
+                    Currently empty
+                </p>
+
+                <h4> Values </h4>
+                <p>
+                    Currently empty
+                </p>
+
+                <h4> Sections </h4>
+                <p>
+                    Currently empty
+                </p>
+            </article>
+        </section>
+    </body>
+</html>
