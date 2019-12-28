@@ -1,10 +1,10 @@
 [package]
 name = "mininip"
-version = "1.2.1"
+version = "1.2.2"
 authors = ["Boris DRYKONINGEN <boris.d@orange.fr>"]
 edition = "2018"
 license = "MPL-2.0"
-description = "An minimalist ini file parser (MinIniP stands for Minimalist Ini Parser). It is written in Rust but I would export its API to the C programming language in order to make various bindings"
+description = "A minimalist ini file parser (MinIniP stands for Minimalist Ini Parser). It is written in Rust but I will export its API to the C programming language in order to make various bindings"
 repository = "https://github.com/BorisDRYKONINGEN/mininip"
 
 [dependencies]

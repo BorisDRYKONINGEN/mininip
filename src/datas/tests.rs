@@ -62,8 +62,50 @@ fn value_parse_bool_on() {
 }
 
 #[test]
+fn value_parse_bool_enabled() {
+    let val = Value::parse("enabled").unwrap();
+
+    assert_eq!(val, Value::Bool(true));
+}
+
+#[test]
+fn value_parse_bool_y() {
+    let val = Value::parse("y").unwrap();
+
+    assert_eq!(val, Value::Bool(true));
+}
+
+#[test]
+fn value_parse_bool_yes() {
+    let val = Value::parse("yes").unwrap();
+
+    assert_eq!(val, Value::Bool(true));
+}
+
+#[test]
 fn value_parse_bool_off() {
     let val = Value::parse("off").unwrap();
+
+    assert_eq!(val, Value::Bool(false));
+}
+
+#[test]
+fn value_parse_bool_disabled() {
+    let val = Value::parse("disabled").unwrap();
+
+    assert_eq!(val, Value::Bool(false));
+}
+
+#[test]
+fn value_parse_bool_n() {
+    let val = Value::parse("n").unwrap();
+
+    assert_eq!(val, Value::Bool(false));
+}
+
+#[test]
+fn value_parse_bool_no() {
+    let val = Value::parse("no").unwrap();
 
     assert_eq!(val, Value::Bool(false));
 }

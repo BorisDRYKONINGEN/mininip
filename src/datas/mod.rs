@@ -63,9 +63,9 @@ impl Value {
             }
         }
 
-        else if effective == "on" {
+        else if effective == "on" || effective == "enabled" || effective == "y" || effective == "yes" {
             Ok(Value::Bool(true))
-        } else if effective == "off" {
+        } else if effective == "off" || effective == "disabled" || effective == "n" || effective == "no" {
             Ok(Value::Bool(false))
         }
 
