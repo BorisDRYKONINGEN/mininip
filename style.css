@@ -1,5 +1,5 @@
 body{
-    background-color: #000000;
+    background-color: #121212;
     color: #ffffff;
 }
 
@@ -52,3 +52,9 @@ td, th{
     padding: 5px;
     text-align: center;
 }
+
+
+/* Code handling */
+.ini_key{ color: #55dd77;}
+.literal{ color: #dd55ff;}
+.section{ color: #ef2222;}

@@ -67,7 +67,7 @@
                     For instance, you may create a <code>Set</code> INI type which is like the sets in maths, and is enclosed by curly
                     braces <code>{}</code>. In this way, parsing this line
                 </p>
-                <pre><code>a INI key = { Hello, world, ! }</code></pre>
+                <pre><code><span class="ini_key">an INI key</span> = <span class="literal">{ Hello, world, ! }</span></code></pre>
                 <p>
                     Will no longer produce a <code>Value::Raw</code> value when parsing it but a <code>Value::Set</code> instead.
                 </p>
@@ -104,9 +104,9 @@
                     A value can be anything following the first <code>=</code> sign in an expression. It must be assigned to a key and not
                     a section. In this code
                 </p>
-                <pre><code>key=value</code></pre>
+                <pre><code><span class="ini_key">key</span>=<span class="literal">value</span></code></pre>
                 <p>
-                    <code>key</code> must be a valid identifier and <code>value</code> is defined as the value.
+                    <code><span class="ini_key">key</span></code> must be a valid identifier and <code><span class="literal">value</span></code> is defined as the value.
                 </p>
 
                 <h5> Types </h5>
@@ -169,16 +169,16 @@
                     set of keys. A section identifier must be a valid identifier or nothing at all. A section is declared by putting square
                     braces around its identifier on a line.
                 </p>
-<pre><code>ident_1 = value_1
-ident_2 = value_2
+<pre><code><span class="ini_key">ident_1</span> = <span class="literal">value_1</span>
+<span class="ini_key">ident_2</span> = <span class="literal">value_2</span>
 
-[section 1]
-ident_1 = value_3
-ident_2 = value_4
+[<span class="section">section 1</span>]
+<span class="ini_key">ident_1</span> = <span class="literal">value_3</span>
+<span class="ini_key">ident_2</span> = <span class="literal">value_4</span>
 
-[section 2]
-ident_1 = value_5
-ident_2 = value_6
+[<span class="section">section 2</span>]
+<span class="ini_key">ident_1</span> = <span class="literal">value_5</span>
+<span class="ini_key">ident_2</span> = <span class="literal">value_6</span>
 </code></pre>
                 <p>
                     In this code, every occurences of <code>ident_1</code> and <code>ident_2</code> are different keys because they are
