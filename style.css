@@ -1,0 +1,62 @@
+body{
+    /* The background is black... */
+    background-color: #000000;
+    color: #ffffff;
+}
+
+/* ... the header and footer appear lighter... */
+header, footer{ background-color: #222222;}
+
+/* ... so their content, lists of related links, appear lighter again */
+.related-links{
+    background-color: #444444;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+ul.related-links{
+    list-style-type: none;
+    display: flex;
+}
+
+ul.related-links li{
+    margin-right: 2em;
+}
+
+a{
+    color: inherit;
+    text-decoration: none;
+}
+
+table,
+ol,
+ul,
+pre code{
+    padding: 5px;
+    margin-left: 1em;
+    margin-right: 1em;
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+pre code{ display: block;}
+
+/* Since these elements appear one grey level above the background... */
+td,
+th,
+ol,
+ul,
+code{ background-color: #222222;}
+
+/* ... their content must be lighter again */
+td code,
+th code,
+ol code,
+ul code{ background-color: #444444;}
+
+td, th{
+    margin: 2px;
+    padding: 5px;
+    text-align: center;
+}
