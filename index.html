@@ -18,10 +18,10 @@
 
         <h1> MinIniP </h1>
         <main>
-            <h2> What is MinIniP ? </h2>
+            <h2 id="what-is-mininip"> <a href="#what-is-mininip">What is MinIniP ?</a> </h2>
 
             <article>
-                <h3> Presentation </h3>
+                <h3 id="presentation"> <a href="#presentation">Presentation</a> </h3>
                 <p>
                     <strong>MinIniP</strong> stands for <q>Minimalist <abbr title="Initialization files">INI</abbr> Parser</q>.
                     It is a parser written in Rust to store datas in an easy and safe way. Currently, it is not intended to be extremly
@@ -31,7 +31,7 @@
             </article>
 
             <article>
-                <h3> Why MinIniP ? </h3>
+                <h3 id="why-mininip"> <a href="#why-mininip">Why MinIniP ?</a> </h3>
                 <p>
                     Honnestly, there is not any particular reason to chose MinIniP. I just wrote it to play with Rust which I learn a few
                     months ago. I will use it in my personnal projects so it will be actively maintained for a long time.
@@ -39,7 +39,7 @@
             </article>
 
             <article>
-                <h3> You convinced me ! How to use it ? </h3>
+                <h3 id="how-to-use"> <a href="#how-to-use">You convinced me ! How to use it ?</a> </h3>
                 <p>
                     Just add
                 </p>
@@ -52,10 +52,10 @@
         </main>
 
         <section>
-            <h2> What is a valid INI file ? </h2>
+            <h2 id="valid-ini"> <a href="#valid-ini">What is a valid INI file ?</a> </h2>
 
             <article>
-                <h3> A lack of standardisation </h3>
+                <h3 id="no-std"> <a href="#no-std">A lack of standardisation</a> </h3>
 
                 <p>
                     Since there is not any standard INI specification, each implementor writes its own. Here is mine. You can contribute to
@@ -74,9 +74,9 @@
             </article>
 
             <article>
-                <h3> The specification followed by MinIniP </h3>
+                <h3 id="ini-specification"> <a href="#ini-specification">The specification followed by MinIniP</a> </h3>
 
-                <h4> Identifiers </h4>
+                <h4 id="identifiers"> <a href="#identifiers">Identifiers</a> </h4>
                 <p>
                     An identifier refers to either
                 </p>
@@ -97,9 +97,9 @@
                     Identifier::is_valid</a> to be aware of what is a valid INI identifier.
                 </p>
 
-                <h4> Values </h4>
+                <h4 id="values"> <a href="#values">Values</a> </h4>
 
-                <h5> Declaring a value </h5>
+                <h5 id="declaring-a-value"> <a href="#declaring-a-value">Declaring a value</a> </h5>
                 <p>
                     A value can be anything following the first <code>=</code> sign in an expression. It must be assigned to a key and not
                     a section. In this code
@@ -109,7 +109,7 @@
                     <code><span class="ini_key">key</span></code> must be a valid identifier and <code><span class="literal">value</span></code> is defined as the value.
                 </p>
 
-                <h5> Types </h5>
+                <h5 id="types"> <a href="#types">Types</a> </h5>
                 <p>
                     A value can be either
                 </p>
@@ -130,7 +130,7 @@
                     the value as written in the file (after unescaping, defined below).
                 </p>
 
-                <h5> Escape sequences </h5>
+                <h5 id="escape-sequences"> <a href="#escape-sequences">Escape sequences</a> </h5>
                 <p>
                     In an INI file, all the possible values are <strong>not accepted</strong>. For instance, you can not store an emoji
                     (like ☺ or ♥) <em>as is</em> in a file. It is even true for characters which may be part of the INI syntax like the
@@ -162,8 +162,11 @@
                                                                       corresponding to its hexadecimal code (six digits) </td> </tr>
                     </tbody>
                 </table>
+                <p>
+                    Please, note that escapes are <strong>not available</strong> for identifiers.
+                </p>
 
-                <h4> Sections </h4>
+                <h4 id="sections"> <a href="#sections">Sections</a> </h4>
                 <p>
                     A section refers to what can be called in C++ a namespace, or a module in Rust. In a few words, it is a named or anonymous
                     set of keys. A section identifier must be a valid identifier or nothing at all. A section is declared by putting square
