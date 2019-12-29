@@ -1,15 +1,9 @@
 body{
-    /* The background is black... */
     background-color: #000000;
     color: #ffffff;
 }
 
-/* ... the header and footer appear lighter... */
-header, footer{ background-color: #222222;}
-
-/* ... so their content, lists of related links, appear lighter again */
 .related-links{
-    background-color: #444444;
     padding: 10px;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -42,18 +36,16 @@ pre code{
 
 pre code{ display: block;}
 
-/* Since these elements appear one grey level above the background... */
+/* Applying an alpha transparency allows us to stack the elements without repetition and with a background becoming lighter and lighter
+ * Indeed, a `ul` in a `header` becomes lighter than the `header` itself and a `code` inside the list is lighter again, etc...
+*/
+header,
+footer,
 td,
 th,
 ol,
 ul,
-code{ background-color: #222222;}
-
-/* ... their content must be lighter again */
-td code,
-th code,
-ol code,
-ul code{ background-color: #444444;}
+code{ background-color: #ffffff22;}
 
 td, th{
     margin: 2px;
