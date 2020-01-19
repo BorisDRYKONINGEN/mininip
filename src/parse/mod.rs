@@ -24,7 +24,7 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
     // new will never be wider than content
     let mut new = String::with_capacity(content.len());
 
-    static FORBIDDEN: [char; 12] = ['\x07', '\x08', '\t', '\r', '\n', '\0', '\\', '\'', '\"', ';', ':', '='];
+    static FORBIDDEN: [char; 13] = ['\x07', '\x08', '\t', '\r', '\n', '\0', '\\', '\'', '\"', ';', ':', '=', '#'];
 
     // `next` is the index (as bytes) of the next escape sequence in content
     let mut next = 0;
@@ -61,6 +61,7 @@ pub fn parse_str(content: &str) -> Result<String, Error> {
             "\\;"  => new.push(';'),
             "\\:"  => new.push(':'),
             "\\="  => new.push('='),
+            "\\#"  => new.push('#'),
 
             _ if escape.len() == 8 => {
                 debug_assert!(escape.starts_with("\\x"));

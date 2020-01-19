@@ -66,8 +66,8 @@ fn parse_str_ignore() {
 
 #[test]
 fn parse_str_special_escapes() {
-    let message = "\\a\\b\\;\\:\\=\\'\\\"\\t\\r\\n\\0\\\\";
-    let expected = "\x07\x08;:='\"\t\r\n\0\\";
+    let message = "\\a\\b\\;\\:\\=\\'\\\"\\t\\r\\n\\0\\\\\\#";
+    let expected = "\x07\x08;:='\"\t\r\n\0\\#";
 
     assert_eq!(parse_str(message).expect("This string is well escaped"), expected);
 }
