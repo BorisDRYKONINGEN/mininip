@@ -12,6 +12,9 @@ use parse::Parser;
 use datas::{Identifier, Value};
 use std::collections::HashMap;
 use std::panic::catch_unwind;
+use errors::{Error, ParseFileError};
+use std::os::raw::c_char;
+use std::ffi::{CString, CStr};
 
 /// Returns a new `Parser` which can be used through FFI
 /// . Returns a null pointer in case of error
@@ -51,6 +54,102 @@ unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut HashMap<Ident
 #[no_mangle]
 unsafe extern fn mininipDestroyParserData(data: *mut HashMap<Identifier, Value>) {
     std::mem::drop(Box::from_raw(data));
+}
+
+/// A FFI usable error enumeration for reporting error kinds through FFI
+/// 
+/// # Note
+/// This type exists because you use a binding branch of the project. It is recommanded to use `master` unless you want to export the library through FFI
+#[repr(C)]
+pub enum MininipErrorKind {
+    /// No error occured
+    NoError = 0,
+    /// The file could not be parsed
+    ParseError,
+    /// An I/O error occured
+    IOError,
+    /// Any other kind of error occured (may be used for memory allocation errors)
+    RuntimeError,
+}
+
+impl From<Error> for MininipErrorKind {
+    fn from(_err: Error) -> MininipErrorKind {
+        MininipErrorKind::ParseError
+    }
+}
+
+impl From<ParseFileError> for MininipErrorKind {
+    fn from(err: ParseFileError) -> MininipErrorKind {
+        match err {
+            ParseFileError::IOError(_)    => MininipErrorKind::IOError,
+            ParseFileError::ParseError(_) => MininipErrorKind::ParseError,
+        }
+    }
+}
+
+/// An FFI usable error structure for reporting error through FFI
+/// 
+/// # Note
+/// This type exists because you use a binding branch of the project. It is recommanded to use `master` unless you want to export the library through FFI
+/// 
+/// # Warning
+/// In some cases, the `msg` field *may* be null. It is especially true if `kind` is `NoError` / `MININIP_NO_ERROR` or `RuntimeError` / `MININIP_RUNTIME_ERROR`
+#[repr(C)]
+pub struct MininipError {
+    pub msg: *const c_char,
+    pub kind: MininipErrorKind,
+}
+
+pub fn create_ffi_error<E: Into<MininipErrorKind> + std::error::Error>(err: E) -> MininipError {
+    let message = CString::new(format!("{}", err))
+        .expect("There should not be any null byte in an error message");
+
+    MininipError {
+        msg: message.into_raw(),
+        kind: err.into(),
+    }
+}
+
+/// Returns datas from the given file
+/// 
+/// # Parameters
+/// `path` a `*const c_char` / `const char*` which is the path of the file to parse
+/// 
+/// `datas` a `*mut *mut HashMap<Identifier, Value>` / `MininipData**` a pointer to a FFI handle of the data returned by a parser which will be assigned if the
+/// operation succeed (if `mininipParseFile(arg1, arg2).kind` is `NoError` / `MININIP_NO_ERROR`)
+/// 
+/// # Return value
+/// A FFI-compatible error (which can be a `NoError`)
+#[no_mangle]
+unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut HashMap<Identifier, Value>) -> MininipError {
+    // Extracting a valid path from the argument
+    let path = CStr::from_ptr(path).to_str();
+    let path = match path {
+        Ok(val) => val,
+        Err(_)  => return MininipError {
+            msg: "Argument is not valid utf-8".as_ptr() as *const c_char,
+            kind: MininipErrorKind::RuntimeError,
+        },
+    };
+
+    catch_unwind(|| {
+        match parse::parse_file(path) {
+            Ok(val) => {
+                let ptr = Box::into_raw(Box::new(val));
+                *datas = ptr;
+
+                MininipError {
+                    msg: std::ptr::null(),
+                    kind: MininipErrorKind::NoError,
+                }
+            },
+            Err(err) => create_ffi_error(err),
+        }
+    })
+    .unwrap_or(MininipError {
+        msg: std::ptr::null(),
+        kind: MininipErrorKind::RuntimeError,
+    })
 }
 
 
