@@ -11,17 +11,24 @@ pub mod errors;
 use parse::Parser;
 use datas::{Identifier, Value};
 use std::collections::HashMap;
+use std::panic::catch_unwind;
 
 /// Returns a new `Parser` which can be used through FFI
+/// . Returns a null pointer in case of error
 #[no_mangle]
 extern fn mininipNewParser() -> *mut Parser {
-    Box::leak(Box::new(Parser::new())) as *mut Parser
+    // Since `Box::new` or `Parser::new` may `panic!`, we must use `catch_unwind` because unwinding through FFI is undefined behavior
+    catch_unwind(|| {
+        Box::leak(Box::new(Parser::new())) as *mut Parser
+    })
+    .unwrap_or(std::ptr::null_mut())
 }
 
 /// Destroys a `Parser` created by `mininipNewParser`
 /// . I wrote it to handle error cases but you should implicitly destroy it through `mininipGetParserData` in any normal use case
 #[no_mangle]
 unsafe extern fn mininipDestroyParser(parser: *mut Parser) {
+    // There is no reason for `std::mem::drop` or `Box::from_raw` to `panic!` so I assume it is safe to not `catch_unwind`
     std::mem::drop(Box::from_raw(parser));
 }
 
@@ -32,8 +39,12 @@ unsafe extern fn mininipDestroyParser(parser: *mut Parser) {
 /// The argument `parser` is therefore invalidated and must NOT be used later
 #[no_mangle]
 unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut HashMap<Identifier, Value> {
-    let parser = Box::from_raw(parser);
-    Box::leak(Box::new(parser.data())) as *mut HashMap<Identifier, Value>
+    // Here, we can `panic!` too
+    catch_unwind(|| {
+        let parser = Box::from_raw(parser);
+        Box::leak(Box::new(parser.data())) as *mut HashMap<Identifier, Value>
+    })
+    .unwrap_or(std::ptr::null_mut())
 }
 
 /// Destroys the result of `mininipGetParserData`
