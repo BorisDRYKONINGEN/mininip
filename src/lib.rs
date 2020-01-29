@@ -19,7 +19,7 @@ use std::panic::catch_unwind;
 extern fn mininipNewParser() -> *mut Parser {
     // Since `Box::new` or `Parser::new` may `panic!`, we must use `catch_unwind` because unwinding through FFI is undefined behavior
     catch_unwind(|| {
-        Box::leak(Box::new(Parser::new())) as *mut Parser
+        Box::new(Parser::new()).into_raw()
     })
     .unwrap_or(std::ptr::null_mut())
 }
@@ -42,7 +42,7 @@ unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut HashMap<Ident
     // Here, we can `panic!` too
     catch_unwind(|| {
         let parser = Box::from_raw(parser);
-        Box::leak(Box::new(parser.data())) as *mut HashMap<Identifier, Value>
+        Box::new(parser.data()).into_raw()
     })
     .unwrap_or(std::ptr::null_mut())
 }
