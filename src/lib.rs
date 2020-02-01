@@ -100,6 +100,10 @@ pub struct MininipError {
     pub kind: MininipErrorKind,
 }
 
+/// Creates and returns an FFI-friendly error from a Rust-only error
+/// 
+/// # Warning
+/// The returned value must be freed with `mininipDestroyError`
 pub fn create_ffi_error<E: Into<MininipErrorKind> + std::error::Error>(err: E) -> MininipError {
     let message = CString::new(format!("{}", err))
         .expect("There should not be any null byte in an error message");
@@ -107,6 +111,15 @@ pub fn create_ffi_error<E: Into<MininipErrorKind> + std::error::Error>(err: E) -
     MininipError {
         msg: message.into_raw(),
         kind: err.into(),
+    }
+}
+
+/// Destroys an FFI-friendly error
+#[no_mangle]
+unsafe extern fn mininipDestroyError(err: *mut MininipError) {
+    let err = &mut *err;
+    if err.msg != std::ptr::null() {
+        std::mem::drop(CString::from_raw(err.msg as *mut c_char));
     }
 }
 
