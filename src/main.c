@@ -25,6 +25,8 @@ int main(int argc, const char* const* argv) {
             fputs("NULL", stderr);
         fputc('\n', stderr);
 
+        mininipDestroyError(&err);
+
         return -1;
     }
 
