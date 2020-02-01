@@ -96,7 +96,7 @@ impl From<ParseFileError> for MininipErrorKind {
 /// In some cases, the `msg` field *may* be null. It is especially true if `kind` is `NoError` / `MININIP_NO_ERROR` or `RuntimeError` / `MININIP_RUNTIME_ERROR`
 #[repr(C)]
 pub struct MininipError {
-    pub msg: *const c_char,
+    pub msg: *mut c_char, // Note that the exposed interface to the C API uses a `const char*`
     pub kind: MininipErrorKind,
 }
 
@@ -118,8 +118,8 @@ pub fn create_ffi_error<E: Into<MininipErrorKind> + std::error::Error>(err: E) -
 #[no_mangle]
 unsafe extern fn mininipDestroyError(err: *mut MininipError) {
     let err = &mut *err;
-    if err.msg != std::ptr::null() {
-        std::mem::drop(CString::from_raw(err.msg as *mut c_char));
+    if err.msg != std::ptr::null_mut() {
+        std::mem::drop(CString::from_raw(err.msg));
     }
 }
 
@@ -140,7 +140,9 @@ unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut HashMap<
     let path = match path {
         Ok(val) => val,
         Err(_)  => return MininipError {
-            msg: "Argument is not valid utf-8".as_ptr() as *const c_char,
+            msg: CString::new("Argument is not valid utf-8")
+                .expect("There is not any null byte inside the message above")
+                .into_raw(),
             kind: MininipErrorKind::RuntimeError,
         },
     };
@@ -152,7 +154,7 @@ unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut HashMap<
                 *datas = ptr;
 
                 MininipError {
-                    msg: std::ptr::null(),
+                    msg: std::ptr::null_mut(),
                     kind: MininipErrorKind::NoError,
                 }
             },
@@ -160,7 +162,7 @@ unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut HashMap<
         }
     })
     .unwrap_or(MininipError {
-        msg: std::ptr::null(),
+        msg: std::ptr::null_mut(),
         kind: MininipErrorKind::RuntimeError,
     })
 }
