@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 /**
  * \file mininip.h
  * \brief The header file to include to use Mininip
@@ -56,6 +58,86 @@ typedef struct MininipError {
 } MininipError;
 
 /**
+ * \brief A structure which holds the raw content written into an INI file
+ * \note it is not a simple pointer to make you aware you must destroy it through
+ * Mininip since Mininip allocated it
+*/
+typedef struct MininipRawValue {
+    const char* ptr;
+} MininipRawValue;
+
+/**
+ * \brief A structure which holds a quoted string read from an INI file
+ * \note it is not a simple pointer to make you aware you must destroy it through
+ * Mininip since Mininip allocated it
+*/
+typedef struct MininipStrValue {
+    const char* ptr;
+} MininipStrValue;
+
+/**
+ * \brief A 64-bits sized integer read from an INI file
+*/
+typedef uint64_t MininipIntValue;
+
+/**
+ * \brief A 64-bits sized floating point number read from an INI file
+*/
+typedef double MininipFloatValue;
+
+/**
+ * \brief An int-sized boolean read from an INI file
+ * \note as a boolean, the only two supported values are MININIP_TRUE and
+ * MININIP_FALSE
+*/
+typedef int MininipBoolValue;
+
+/**
+ * brief The `true` variant of the boolean
+*/
+#define MININIP_TRUE 1
+/**
+ * \brief The `false` variant of the boolean
+*/
+#define MININIP_FALSE 0
+
+/**
+ * \brief An union which can hold a value of all the types supported by Mininip
+ * \note You should use it through a MininipEntry
+ * \see MininipEntry
+*/
+typedef union MininipValue {
+    MininipRawValue raw;
+    MininipStrValue string;
+    MininipIntValue integer;
+    MininipFloatValue floating;
+    MininipBoolValue boolean;
+} MininipValue;
+
+/**
+ * \brief An enumeration which can represent all the types supported by Mininip
+ * \note You should use it through a MininipEntry
+ * \see MininipEntry
+*/
+typedef enum MininipType {
+    MININIP_TYPE_RAW,
+    MININIP_TYPE_STR,
+    MININIP_TYPE_INT,
+    MININIP_TYPE_FLOAT,
+    MININIP_TYPE_BOOL,
+} MininipType;
+
+/**
+ * \brief An entry which is a value associated to a key and a section
+ * \see mininipGetEntry
+ * \see mininipDestroyEntry
+*/
+typedef struct MininipEntry {
+    MininipValue value;
+    MininipType valueType;
+} MininipEntry;
+
+/**
  * \brief Creates a new handle to a parser
  * \returns a pointer to a new parser
  * \see MininipParser
@@ -95,6 +177,27 @@ void mininipDestroyError(MininipError* err);
  * \returns a MininipError to check whether an error occured
 */
 MininipError mininipParseFile(const char* path, MininipData** data);
+
+/**
+ * \brief Creates an Entry found in an INI file
+ * \param data the data set to search in
+ * \param section the (optional) name of the section
+ * \param key the name of the key
+ * \param entry a pointer to the MininipEntry to assign
+ * \returns `MININIP_TRUE` in case of success, `MININIP_FALSE` in case of error.
+ * 
+ * An error means either
+ * - An invalid value for `section` or `key` (note the variable cannot be found because it cannot exist in this case)
+ * - A variable not found
+ * - An allocation or conversion error
+*/
+MininipBoolValue mininipGetEntry(MininipData* data, const char* section, const char* key, MininipEntry* entry);
+
+/**
+ * \brief Destroys a MininipEntry by freeing all the ressources
+ * \param entry the entry to destroy
+*/
+void mininipDestroyEntry(MininipEntry* entry);
 
 #ifdef __cplusplus
 }

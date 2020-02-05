@@ -31,7 +31,39 @@ int main(int argc, const char* const* argv) {
     }
 
     printf("%p\n", fileDatas);
+
+    MininipEntry entry;
+    if (mininipGetEntry(fileDatas, NULL, "author", &entry) == MININIP_FALSE) {
+        fputs("`author` key not found in the file\n", stderr);
+        goto destroyData;
+    }
+
+    switch (entry.valueType) {
+    case MININIP_TYPE_RAW:
+        fputs("Warning, the type `Raw` has been used for `author`\n", stderr);
+        printf("The author is %s !\n", entry.value.raw.ptr);
+        break;
+
+    case MININIP_TYPE_STR:
+        printf("The author is %s !\n", entry.value.string.ptr);
+        break;
+
+    default:
+        fputs("Invalid type for `author` !\n", stderr);
+        goto destroyEntry;
+        break;
+    }
+
+    mininipDestroyEntry(&entry);
     mininipDestroyParserData(fileDatas);
 
     return 0;
+
+destroyEntry:
+    mininipDestroyEntry(&entry);
+
+destroyData:
+    mininipDestroyParserData(fileDatas);
+
+    return -1;
 }
