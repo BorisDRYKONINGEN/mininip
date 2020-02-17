@@ -4,10 +4,10 @@
 
 int main(int argc, const char* const* argv) {
     MininipParser* parser = mininipNewParser();
-    printf("%p\n", parser);
+    printf("%p\n", (void*) parser);
 
     MininipData* data = mininipGetParserData(parser);
-    printf("%p\n", data);
+    printf("%p\n", (void*) data);
 
     mininipDestroyParserData(data);
 
@@ -30,7 +30,7 @@ int main(int argc, const char* const* argv) {
         return -1;
     }
 
-    printf("%p\n", fileDatas);
+    printf("%p\n", (void*) fileDatas);
 
     MininipEntry entry;
     if (mininipGetEntry(fileDatas, NULL, "author", &entry) == MININIP_FALSE) {
