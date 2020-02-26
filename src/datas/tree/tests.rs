@@ -1,4 +1,5 @@
 use crate::datas::{tree::*, Identifier, Value};
+use crate::parse::Parser;
 
 #[test]
 fn cache_from_data() {
@@ -28,4 +29,35 @@ fn cache_from_data() {
 
     let bar = &cache.keys[&Some(String::from("bar"))];
     assert_eq!(bar, &vec![String::from("abc"), String::from("baz")]);
+}
+
+#[test]
+fn section_iterator_iterates_well() {
+    // Here, we assume that the parser and the `Tree`'s constructor works well
+    let mut parser = Parser::new();
+    let content = "\
+    version = '1.3.0'\n\
+    debug = y\n\
+    allow-errors = y\n\
+    \n\
+    [foo]\n\
+    answer = 42\n\
+    pi = 3.14\n\
+    \n\
+    [bar]\n\
+    baz =\n\
+    abc = \"def\"\n\
+    ";
+
+    for i in content.lines() {
+        parser.parse_line(i)
+            .expect("This code is valid");
+    }
+
+    let tree = Tree::from_data(parser.data());
+    let expected = [None, Some("bar"), Some("foo")];
+
+    for (n, i) in tree.sections().enumerate() {
+        assert_eq!(&i.name(), &expected[n]);
+    }
 }

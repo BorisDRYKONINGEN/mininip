@@ -37,8 +37,63 @@ impl Tree {
             data: data,
         }
     }
+
+    /// Iterates over the sections of a `Tree`
+    pub fn sections(&self) -> SectionIterator<'_> {
+        SectionIterator {
+            iterator: self.cache.sections.iter(),
+            target: self,
+            awaited: false,
+        }
+    }
 }
 
+
+/// An iterator over sections in a `Tree`
+pub struct SectionIterator<'a> {
+    /// An iterator over the sections names in the `Tree`
+    iterator: std::slice::Iter<'a, String>,
+    /// The `Tree` owning the data iterated
+    target: &'a Tree,
+    /// Set to `true` if already awaited, `false` otherwise. Necessary because
+    /// if it is set to `false`, we need to iterate over the global section
+    /// before the named ones
+    awaited: bool,
+}
+
+impl<'a> Iterator for SectionIterator<'a> {
+    type Item = Section<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.awaited {
+            self.awaited = true;
+            return Some(Section {
+                ident: None,
+                target: self.target,
+            });
+        }
+
+        let ident = self.iterator.next()?;
+        Some(Section {
+            ident: Some(&ident),
+            target: self.target,
+        })
+    }
+}
+
+
+/// A section in a `Tree`
+pub struct Section<'a> {
+    ident: Option<&'a str>,
+    target: &'a Tree,
+}
+
+impl<'a> Section<'a> {
+    /// Returns the identifier (name) of this section
+    pub fn name(&self) -> Option<&'a str> {
+        self.ident.clone()
+    }
+}
 
 /// A cached result of an extraction of all the section and keys names. Will be
 /// kept and updated forever in the owning `Tree`
