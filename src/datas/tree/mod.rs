@@ -93,7 +93,52 @@ impl<'a> Section<'a> {
     pub fn name(&self) -> Option<&'a str> {
         self.ident.clone()
     }
+
+    /// Returns an iterator over the keys of this section
+    pub fn keys(&self) -> KeyIterator<'_> {
+        KeyIterator {
+            iterator: self.keys_internal_iterator(),
+            target: self,
+        }
+    }
+
+    /// Returns an iterator ofer the keys of this section.
+    /// 
+    /// # Note
+    /// This iterator is the one internally used by the vector storing these key
+    /// names. It must not be exposed in a public interface
+    fn keys_internal_iterator(&self) -> std::slice::Iter<'a, String> {
+        self.target.cache.keys[&self.name_owned()].iter()
+    }
+
+    /// Returns the identifier of this section like it must be passed to an
+    /// `Identifier`: an `Option<String>` instead of an `Option<&str>`
+    pub fn name_owned(&self) -> Option<String> {
+        match self.ident {
+            Some(val) => Some(String::from(val)),
+            None      => None,
+        }
+    }
 }
+
+
+/// An iterator over keys in a given section
+pub struct KeyIterator<'a> {
+    iterator: std::slice::Iter<'a, String>,
+    target: &'a Section<'a>,
+}
+
+impl<'a> Iterator for KeyIterator<'a> {
+    type Item = Identifier;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let key = self.iterator.next()?;
+        let section = self.target.name_owned();
+
+        Some(Identifier::new(section, key.clone()))
+    }
+}
+
 
 /// A cached result of an extraction of all the section and keys names. Will be
 /// kept and updated forever in the owning `Tree`

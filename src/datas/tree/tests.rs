@@ -61,3 +61,24 @@ fn section_iterator_iterates_well() {
         assert_eq!(&i.name(), &expected[n]);
     }
 }
+
+#[test]
+fn key_iterator_iterates_well() {
+    let mut data = HashMap::new();
+
+    let section = None;
+    data.insert(Identifier::new(section.clone(), String::from("version")), Value::Str(String::from("1.3.0")));
+    data.insert(Identifier::new(section.clone(), String::from("debug")), Value::Bool(true));
+    data.insert(Identifier::new(section,         String::from("allow-errors")), Value::Bool(false));
+
+    let tree = Tree::from_data(data);
+    let global = tree.sections()
+                     .next()
+                     .expect("This tree only owns one section");
+
+    let expected = ["allow-errors", "debug", "version"];
+    for (n, i) in global.keys().enumerate() {
+        assert_eq!(i.name(), expected[n]);
+        assert_eq!(i.section(), None);
+    }
+}
