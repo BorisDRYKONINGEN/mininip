@@ -30,20 +30,31 @@ pub struct Tree {
 }
 
 impl Tree {
-    /// Creates a `Tree` from the data returned by a parser
-    pub fn from_data(data: HashMap<Identifier, Value>) -> Tree {
-        Tree {
-            cache: Cache::from(&data),
-            data: data,
-        }
-    }
-
     /// Iterates over the sections of a `Tree`
     pub fn sections(&self) -> SectionIterator<'_> {
         SectionIterator {
             iterator: self.cache.sections.iter(),
             target: self,
             awaited: false,
+        }
+    }
+
+    /// Returns an immutable reference to the owned data
+    pub fn get_data(&self) -> &HashMap<Identifier, Value> {
+        &self.data
+    }
+
+    /// Consumes `self` and returns the owned data
+    pub fn into_data(self) -> HashMap<Identifier, Value> {
+        self.data
+    }
+}
+
+impl From<HashMap<Identifier, Value>> for Tree {
+    fn from(data: HashMap<Identifier, Value>) -> Tree {
+        Tree {
+            cache: Cache::from(&data),
+            data: data,
         }
     }
 }

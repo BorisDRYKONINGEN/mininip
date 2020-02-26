@@ -54,7 +54,7 @@ fn section_iterator_iterates_well() {
             .expect("This code is valid");
     }
 
-    let tree = Tree::from_data(parser.data());
+    let tree = Tree::from(parser.data());
     let expected = [None, Some("bar"), Some("foo")];
 
     for (n, i) in tree.sections().enumerate() {
@@ -71,7 +71,7 @@ fn key_iterator_iterates_well() {
     data.insert(Identifier::new(section.clone(), String::from("debug")), Value::Bool(true));
     data.insert(Identifier::new(section,         String::from("allow-errors")), Value::Bool(false));
 
-    let tree = Tree::from_data(data);
+    let tree = Tree::from(data);
     let global = tree.sections()
                      .next()
                      .expect("This tree only owns one section");
