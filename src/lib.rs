@@ -350,6 +350,51 @@ unsafe extern fn mininipDestroyEntry(entry: *mut MininipEntry) {
     }
 }
 
+/// An FFI handle to a `Tree`
+type MininipTree = crate::datas::tree::Tree;
+
+/// Creates a new `MininipTree` from an existing `MininipData`
+/// 
+/// # Parameters
+/// `data` the data to build a `MininipTree` from. Will be invalidated
+/// 
+/// # Return value
+/// A `MininipTree` holding `data`
+/// 
+/// A null pointer if any error occurs (always a runtime error such as memory allocation failure)
+#[no_mangle]
+unsafe extern fn mininipCreateTreeFromData(data: *mut MininipData) -> *mut MininipTree {
+    catch_unwind(|| {
+        let data = Box::from_raw(data);
+        let tree = MininipTree::from(*data);
+        Box::into_raw(Box::new(tree))
+    })
+    .unwrap_or(std::ptr::null_mut())
+}
+
+/// Destroys the `MininipTree` passed as parameters
+#[no_mangle]
+unsafe extern fn mininipDestroyTree(tree: *mut MininipTree) {
+    std::mem::drop(Box::from_raw(tree));
+}
+
+/// Releases the `MininipData` used by a `MininipTree`
+/// 
+/// # Parameters
+/// `tree` the `MininipTree` to consume and to extract data from
+/// 
+/// # Return value
+/// A pointer to that `MininipData` or `NULL` if a memory allocation failed
+#[no_mangle]
+unsafe extern fn mininipGetDataFromTree(tree: *mut MininipTree) -> *mut MininipData {
+    catch_unwind(|| {
+        let tree = Box::from_raw(tree);
+        let data = Box::new(tree.into_data());
+        Box::into_raw(data)
+    })
+    .unwrap_or(std::ptr::null_mut())
+}
+
 
 // unit-tests
 #[cfg(test)]
