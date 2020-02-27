@@ -78,10 +78,13 @@ impl<'a> Iterator for SectionIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         if !self.awaited {
             self.awaited = true;
-            return Some(Section {
-                ident: None,
-                target: self.target,
-            });
+
+            if self.target.cache.keys.get(&None).is_some() {
+                return Some(Section {
+                    ident: None,
+                    target: self.target,
+                });
+            }
         }
 
         let ident = self.iterator.next()?;

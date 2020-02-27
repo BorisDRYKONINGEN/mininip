@@ -82,3 +82,20 @@ fn key_iterator_iterates_well() {
         assert_eq!(i.section(), None);
     }
 }
+
+#[test]
+fn key_iterator_no_global() {
+    let mut data = HashMap::new();
+
+    let section = Some(String::from("foo"));
+    data.insert(Identifier::new(section.clone(), String::from("version")), Value::Str(String::from("1.3.0")));
+    data.insert(Identifier::new(section.clone(), String::from("debug")), Value::Bool(true));
+    data.insert(Identifier::new(section,         String::from("allow-errors")), Value::Bool(false));
+
+    let tree = Tree::from(data);
+    let foo = tree.sections()
+                  .next()
+                  .expect("There is one single section in this tree");
+
+    assert_eq!(foo.name(), Some("foo"));
+}
