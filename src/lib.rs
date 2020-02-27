@@ -35,13 +35,16 @@ unsafe extern fn mininipDestroyParser(parser: *mut Parser) {
     std::mem::drop(Box::from_raw(parser));
 }
 
+/// The data retrieved from a parser
+type MininipData = HashMap<Identifier, Value>;
+
 /// Destroys a `Parser` created by `mininipNewParser` and returns the result of `parser.data()` which can be used through FFI
 /// . It is useful to retrieve the datas in a parsed file
 /// 
 /// # Warning
 /// The argument `parser` is therefore invalidated and must NOT be used later
 #[no_mangle]
-unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut HashMap<Identifier, Value> {
+unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut MininipData {
     // Here, we can `panic!` too
     catch_unwind(|| {
         let parser = Box::from_raw(parser);
@@ -52,7 +55,7 @@ unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut HashMap<Ident
 
 /// Destroys the result of `mininipGetParserData`
 #[no_mangle]
-unsafe extern fn mininipDestroyParserData(data: *mut HashMap<Identifier, Value>) {
+unsafe extern fn mininipDestroyParserData(data: *mut MininipData) {
     std::mem::drop(Box::from_raw(data));
 }
 
@@ -134,7 +137,7 @@ unsafe extern fn mininipDestroyError(err: *mut MininipError) {
 /// # Return value
 /// A FFI-compatible error (which can be a `NoError`)
 #[no_mangle]
-unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut HashMap<Identifier, Value>) -> MininipError {
+unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut MininipData) -> MininipError {
     // Extracting a valid path from the argument
     let path = CStr::from_ptr(path).to_str();
     let path = match path {
@@ -293,7 +296,7 @@ const MININIP_FALSE: c_int = 0;
 /// # Return value
 /// `true` if the entry exists, `false` otherwise or in case of error (including either any runtime error or an invalid name for section or key)
 #[no_mangle]
-unsafe extern fn mininipGetEntry(data: *mut HashMap<Identifier, Value>, section: *const c_char, key: *const c_char, entry: *mut MininipEntry) -> MininipBoolValue {
+unsafe extern fn mininipGetEntry(data: *mut MininipData, section: *const c_char, key: *const c_char, entry: *mut MininipEntry) -> MininipBoolValue {
     catch_unwind(|| {
         let section = if section == std::ptr::null() {
             None

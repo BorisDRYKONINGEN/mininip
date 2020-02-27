@@ -241,5 +241,7 @@ impl Display for Identifier {
 }
 
 
+pub mod tree;
+
 #[cfg(test)]
 mod tests;
