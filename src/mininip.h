@@ -138,6 +138,14 @@ typedef struct MininipEntry {
 } MininipEntry;
 
 /**
+ * \brief A handle to a data tree. A tree is a more user-friendly data-type to represent the data returned by mininipGetParserData
+ * \see mininipCreateTreeFromData to create it
+ * \see mininipDestroyTree to destroy it
+ * \see mininipGetDataFromTree to extract the MininipData owned
+*/
+typedef struct MininipTree MininipTree;
+
+/**
  * \brief Creates a new handle to a parser
  * \returns a pointer to a new parser
  * \see MininipParser
@@ -198,6 +206,26 @@ MininipBoolValue mininipGetEntry(MininipData* data, const char* section, const c
  * \param entry the entry to destroy
 */
 void mininipDestroyEntry(MininipEntry* entry);
+
+/**
+ * \brief Creates a new MininipTree from an existing MininipData
+ * \param data the data to build a MininipTree from. It will be invalidated
+ * \returns a MininipTree holding and representig `data` or a null pointer if any error occurs (which is always any runtime error such as memory allocation failure)
+*/
+MininipTree* mininipCreateTreeFromData(MininipData* data);
+
+/**
+ * \brief Destroys a MininipTree and the MininipData held
+ * \param tree the tree to destroy
+*/
+void mininipDestroyTree(MininipTree* tree);
+
+/**
+ * \brief Releases the MininipData used by a MininipTree
+ * \param tree the MininipTree to destroy and to extract data from
+ * \returns a pointer to that MininipData or `NULL` if a memory allocation failed
+*/
+MininipData* mininipGetDataFromTree(MininipTree* tree);
 
 #ifdef __cplusplus
 }

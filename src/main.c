@@ -1,6 +1,13 @@
 #include <stdio.h>
-
+#include <stdbool.h>
 #include "mininip.h"
+
+/**
+ * \brief Shows to the user the content of an INI stream
+ * \param data the data extracted from that INI stream. Must be a mutable pointer to a mutable pointer because the target of the pointer will be moved
+ * \return `true` in case of success, `false` otherwise
+*/
+bool showFileContent(MininipData** data);
 
 int main(int argc, const char* const* argv) {
     MininipParser* parser = mininipNewParser();
@@ -55,6 +62,7 @@ int main(int argc, const char* const* argv) {
     }
 
     mininipDestroyEntry(&entry);
+    showFileContent(&fileDatas);
     mininipDestroyParserData(fileDatas);
 
     return 0;
@@ -66,4 +74,21 @@ destroyData:
     mininipDestroyParserData(fileDatas);
 
     return -1;
+}
+
+bool showFileContent(MininipData** data) {
+    MininipTree* tree = mininipCreateTreeFromData(*data);
+    if (!tree)
+        return false;
+
+    // Currently impossible to write because the API is incomplete
+    fputs("Error : unimplemented function showFileContent\n", stderr);
+    goto destroyTree;
+
+    *data = mininipGetDataFromTree(tree);
+    return true;
+
+destroyTree:
+    *data = mininipGetDataFromTree(tree);
+    return false;
 }
