@@ -146,6 +146,16 @@ typedef struct MininipEntry {
 typedef struct MininipTree MininipTree;
 
 /**
+ * \brief An iterator over the various sections of a MininipTree
+*/
+typedef struct MininipSectionIterator MininipSectionIterator;
+
+/**
+ * \brief A handle to a section yielded by a SectionIterator
+*/
+typedef struct MininipSection MininipSection;
+
+/**
  * \brief Creates a new handle to a parser
  * \returns a pointer to a new parser
  * \see MininipParser
@@ -226,6 +236,59 @@ void mininipDestroyTree(MininipTree* tree);
  * \returns a pointer to that MininipData or `NULL` if a memory allocation failed
 */
 MininipData* mininipGetDataFromTree(MininipTree* tree);
+
+/**
+ * \brief Returns an iterator over the sections of a MininipTree
+ * \param tree the MininipTree to iterate on
+ * \returns a pointer to a new MininipSectionIterator over `tree`
+ * \see mininipDestroySectionIterator to destroy the returned iterator
+*/
+MininipSectionIterator* mininipCreateSectionIterator(MininipTree* tree);
+
+/**
+ * \brief Destroys a MininipSectionIterator
+ * \param ptr a pointer to the MininipSectionIterator to destroy
+*/
+void mininipDestroySectionIterator(MininipSectionIterator* ptr);
+
+/**
+ * \brief Yields the next MininipSection from a MininipSectionIterator or a null pointer if iteration ended
+ * \param iter the MininipSectionIterator to yield from
+ * \returns a pointer to the MininipSection yielded from `iter`
+ * \note You do **not** own the pointer to that MininipSection so you do **not** have to free it and you must **not** assume that it will remain valid once you called this function once again
+ * \see mininipNextOwnedSection if you want to own the pointer yielded though this is not recommended except when necessary
+*/
+MininipSection* mininipNextSection(MininipSectionIterator* iter);
+
+/**
+ * \brief Yields the next MininipSection from a MininipSectionIterator or a null pointer if iteration ended
+ * \param iter the MininipSectionIterator to yield from
+ * \returns a pointer to the MininipSection yielded from `iter`
+ * \note You own the pointer to that MininipSection so you have to free it using mininipDestroySection
+ * \see mininipNextSection if you do not want to own the pointer yielded (this is the recommended way if owning it is not necessary)
+*/
+MininipSection* mininipNextOwnedSection(MininipSectionIterator* iter);
+
+/**
+ * \brief Destroys a MininipSection
+ * \param ptr the handle to the MininipSection to free
+*/
+void mininipDestroySection(MininipSection* ptr);
+
+/**
+ * \brief Returns the name of a MininipSection
+ * \param section the section to return the name
+ * \param ptr the pointer to assign the name of `section` to. Must be freed using MininipDestroyString
+ * \returns MININIP_TRUE in case of success, MININIP_FALSE in case of memory allocation error. In this case, `ptr` must **not** be freed
+*/
+MininipBoolValue mininipGetSectionName(const MininipSection* section, char** ptr);
+
+/**
+ * \brief Destroys a string allocated by Mininip
+ * \param string the string to free
+*/
+void mininipDestroyString(char* string);
+
 
 #ifdef __cplusplus
 }

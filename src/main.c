@@ -5,9 +5,15 @@
 /**
  * \brief Shows to the user the content of an INI stream
  * \param data the data extracted from that INI stream. Must be a mutable pointer to a mutable pointer because the target of the pointer will be moved
- * \return `true` in case of success, `false` otherwise
+ * \returns `true` in case of success, `false` otherwise
 */
 bool showFileContent(MininipData** data);
+/**
+ * \brief Shows to the user the content of an MininipSection and its name
+ * \param section the section to show the content
+ * \returns `true` in case of success, `false` otherwise
+*/
+bool showSectionContent(MininipSection* section);
 
 int main(int argc, const char* const* argv) {
     MininipParser* parser = mininipNewParser();
@@ -81,14 +87,42 @@ bool showFileContent(MininipData** data) {
     if (!tree)
         return false;
 
-    // Currently impossible to write because the API is incomplete
-    fputs("Error : unimplemented function showFileContent\n", stderr);
-    goto destroyTree;
+    MininipSectionIterator* iter = mininipCreateSectionIterator(tree);
+    if (!iter)
+        goto destroyTree;
+
+    MininipSection* i = mininipNextSection(iter);
+    while (i) {
+        if (!showSectionContent(i))
+            goto destroyIterator;
+
+        i = mininipNextSection(iter);
+        continue;
+    }
 
     *data = mininipGetDataFromTree(tree);
     return true;
 
+destroyIterator:
+    mininipDestroySectionIterator(iter);
 destroyTree:
     *data = mininipGetDataFromTree(tree);
+    return false;
+}
+
+bool showSectionContent(MininipSection* section) {
+    char* name = NULL;
+    if (!mininipGetSectionName(section, &name))
+        return false;
+
+    if (name) {
+        printf("[%s]\n", name);
+        mininipDestroyString(name);
+    } else
+        fputs("; Global section\n", stdout);
+
+
+    // Unimplemented part
+    fputs("Unimplemented\n", stderr);
     return false;
 }
