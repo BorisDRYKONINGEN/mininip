@@ -16,13 +16,83 @@ use errors::{Error, ParseFileError};
 use std::os::raw::{c_char, c_int};
 use std::ffi::{CString, CStr};
 
+/// Exports an arbitrary through FFI
+/// 
+/// # Parameters
+/// `obj` the object to export
+/// 
+/// # Return value
+/// A raw pointer to `obj` which has been moved on the heap
+/// 
+/// # See
+/// `ffi_destroy` to destroy the pointer returned properly
+pub fn ffi_export<T>(obj: T) -> *mut T {
+    let obj = Box::new(obj);
+    Box::into_raw(obj)
+}
+
+/// Destroys an object exported with `ffi_export`
+/// 
+/// # Parameters
+/// `ptr` a pointer to the object to destroy
+pub unsafe fn ffi_destroy<T>(ptr: *mut T) {
+    std::mem::drop(Box::from_raw(ptr));
+}
+
+/// Exports a string through FFI
+/// 
+/// # Parameters
+/// `string` the string to export
+/// 
+/// # Return value
+/// A raw pointer to a new string which has been copied on the heap
+/// 
+/// # Panics
+/// Panics if `string` contains a null character `U+0000`
+/// 
+/// # See
+/// `ffi_destroy_str` to destroy the pointer returned properly
+pub fn ffi_export_str(string: &str) -> *mut c_char {
+    CString::new(string).unwrap().into_raw()
+}
+
+/// Destroys a string previously exported with `ffi_export_str`
+/// 
+/// # Parameters
+/// `ptr` a pointer to the object to destroy
+pub unsafe fn ffi_destroy_str(ptr: *mut c_char) {
+    std::mem::drop(CString::from_raw(ptr));
+}
+
+/// Casts an FFI string into a non-owned Rust one *without* invalidating the pointer
+/// 
+/// # Parameters
+/// `ptr` a pointer to an FFI string
+/// 
+/// # Return value
+/// A string slice to the decoded text in case of success
+/// 
+/// An `Utf8Error` in case of error
+pub unsafe fn ffi_decode_str(ptr: *const c_char) -> Result<&'static str, std::str::Utf8Error> {
+    CStr::from_ptr(ptr).to_str()
+}
+
+/// Destroys any string allocated by Mininip
+/// 
+/// # Parameters
+/// `string` the string to free. Must be allocated by Mininip
+#[no_mangle]
+unsafe extern fn mininipDestroyString(string: *mut c_char) {
+    ffi_destroy_str(string);
+}
+
 /// Returns a new `Parser` which can be used through FFI
 /// . Returns a null pointer in case of error
 #[no_mangle]
 extern fn mininipNewParser() -> *mut Parser {
     // Since `Box::new` or `Parser::new` may `panic!`, we must use `catch_unwind` because unwinding through FFI is undefined behavior
     catch_unwind(|| {
-        Box::into_raw(Box::new(Parser::new()))
+        ffi_export(Parser::new())
     })
     .unwrap_or(std::ptr::null_mut())
 }
@@ -32,7 +102,7 @@ extern fn mininipNewParser() -> *mut Parser {
 #[no_mangle]
 unsafe extern fn mininipDestroyParser(parser: *mut Parser) {
     // There is no reason for `std::mem::drop` or `Box::from_raw` to `panic!` so I assume it is safe to not `catch_unwind`
-    std::mem::drop(Box::from_raw(parser));
+    ffi_destroy(parser);
 }
 
 /// The data retrieved from a parser
@@ -48,7 +118,7 @@ unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut MininipData {
     // Here, we can `panic!` too
     catch_unwind(|| {
         let parser = Box::from_raw(parser);
-        Box::into_raw(Box::new(parser.data()))
+        ffi_export(parser.data())
     })
     .unwrap_or(std::ptr::null_mut())
 }
@@ -56,7 +126,7 @@ unsafe extern fn mininipGetParserData(parser: *mut Parser) -> *mut MininipData {
 /// Destroys the result of `mininipGetParserData`
 #[no_mangle]
 unsafe extern fn mininipDestroyParserData(data: *mut MininipData) {
-    std::mem::drop(Box::from_raw(data));
+    ffi_destroy(data);
 }
 
 /// A FFI usable error enumeration for reporting error kinds through FFI
@@ -108,11 +178,8 @@ pub struct MininipError {
 /// # Warning
 /// The returned value must be freed with `mininipDestroyError`
 pub fn create_ffi_error<E: Into<MininipErrorKind> + std::error::Error>(err: E) -> MininipError {
-    let message = CString::new(format!("{}", err))
-        .expect("There should not be any null byte in an error message");
-
     MininipError {
-        msg: message.into_raw(),
+        msg: ffi_export_str(&format!("{}", err)),
         kind: err.into(),
     }
 }
@@ -122,7 +189,7 @@ pub fn create_ffi_error<E: Into<MininipErrorKind> + std::error::Error>(err: E) -
 unsafe extern fn mininipDestroyError(err: *mut MininipError) {
     let err = &mut *err;
     if err.msg != std::ptr::null_mut() {
-        std::mem::drop(CString::from_raw(err.msg));
+        ffi_destroy_str(err.msg);
     }
 }
 
@@ -139,13 +206,11 @@ unsafe extern fn mininipDestroyError(err: *mut MininipError) {
 #[no_mangle]
 unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut MininipData) -> MininipError {
     // Extracting a valid path from the argument
-    let path = CStr::from_ptr(path).to_str();
+    let path = ffi_decode_str(path);
     let path = match path {
         Ok(val) => val,
         Err(_)  => return MininipError {
-            msg: CString::new("Argument is not valid utf-8")
-                .expect("There is not any null byte inside the message above")
-                .into_raw(),
+            msg: ffi_export_str("Argument is not valid utf-8"),
             kind: MininipErrorKind::RuntimeError,
         },
     };
@@ -153,7 +218,7 @@ unsafe extern fn mininipParseFile(path: *const c_char, datas: *mut *mut MininipD
     catch_unwind(|| {
         match parse::parse_file(path) {
             Ok(val) => {
-                let ptr = Box::into_raw(Box::new(val));
+                let ptr = ffi_export(val);
                 *datas = ptr;
 
                 MininipError {
@@ -187,7 +252,7 @@ impl From<Value> for MininipEntry {
             Value::Raw(s) => MininipEntry {
                 value: MininipValue {
                     raw: MininipRawValue {
-                        ptr: CString::new(s).unwrap().into_raw(),
+                        ptr: ffi_export_str(&s),
                     },
                 },
                 value_type: MininipType::Raw,
@@ -195,7 +260,7 @@ impl From<Value> for MininipEntry {
             Value::Str(s) => MininipEntry {
                 value: MininipValue {
                     string: MininipStrValue {
-                        ptr: CString::new(s).unwrap().into_raw(),
+                        ptr: ffi_export_str(&s),
                     },
                 },
                 value_type: MininipType::Str,
@@ -301,20 +366,18 @@ unsafe extern fn mininipGetEntry(data: *mut MininipData, section: *const c_char,
         let section = if section == std::ptr::null() {
             None
         } else {
-            let string = match CStr::from_ptr(section).to_str() {
-                Ok(val) => val,
+            match ffi_decode_str(section) {
+                Ok(val) => Some(String::from(val)),
                 Err(_)  => return MININIP_FALSE,
-            };
-            Some(String::from(string))
+            }
         };
-        let key = match CStr::from_ptr(key).to_str() {
-            Ok(val) => val,
+        let key = match ffi_decode_str(key) {
+            Ok(val) => String::from(val),
             Err(_)  => return MININIP_FALSE,
         };
-        let key = String::from(key);
 
         if let Some(val) = &section {
-            if !Identifier::is_valid(&val) {
+            if !Identifier::is_valid(val) {
                 return MININIP_FALSE;
             }
         }
@@ -340,8 +403,8 @@ unsafe extern fn mininipGetEntry(data: *mut MininipData, section: *const c_char,
 unsafe extern fn mininipDestroyEntry(entry: *mut MininipEntry) {
     let entry = &mut *entry;
     match entry.value_type {
-        MininipType::Raw   => std::mem::drop(CString::from_raw(entry.value.raw.ptr)),
-        MininipType::Str   => std::mem::drop(CString::from_raw(entry.value.string.ptr)),
+        MininipType::Raw   => ffi_destroy_str(entry.value.raw.ptr),
+        MininipType::Str   => ffi_destroy_str(entry.value.string.ptr),
         MininipType::Int   => {}, // No ressource to free here
         MininipType::Float => {}, // No ressource to free here
         MininipType::Bool  => {}, // No ressource to free here
@@ -367,7 +430,7 @@ unsafe extern fn mininipCreateTreeFromData(data: *mut MininipData) -> *mut Minin
     catch_unwind(|| {
         let data = Box::from_raw(data);
         let tree = MininipTree::from(*data);
-        Box::into_raw(Box::new(tree))
+        ffi_export(tree)
     })
     .unwrap_or(std::ptr::null_mut())
 }
@@ -375,7 +438,7 @@ unsafe extern fn mininipCreateTreeFromData(data: *mut MininipData) -> *mut Minin
 /// Destroys the `MininipTree` passed as parameters
 #[no_mangle]
 unsafe extern fn mininipDestroyTree(tree: *mut MininipTree) {
-    std::mem::drop(Box::from_raw(tree));
+    ffi_destroy(tree);
 }
 
 /// Releases the `MininipData` used by a `MininipTree`
@@ -389,12 +452,131 @@ unsafe extern fn mininipDestroyTree(tree: *mut MininipTree) {
 unsafe extern fn mininipGetDataFromTree(tree: *mut MininipTree) -> *mut MininipData {
     catch_unwind(|| {
         let tree = Box::from_raw(tree);
-        let data = Box::new(tree.into_data());
-        Box::into_raw(data)
+        ffi_export(tree.into_data())
     })
     .unwrap_or(std::ptr::null_mut())
 }
 
+/// An iterator over the various sections of a `MininipTree`
+// marked as `'static` because the FFI interface is designed to be `'static`. Pointers will live as long as they are not freed
+pub struct MininipSectionIterator {
+    iterator: crate::datas::tree::SectionIterator<'static>,
+    last_allocated: *mut MininipSection,
+}
+
+/// Returns an iterator over the sections of a `MininipTree`
+/// 
+/// # Parameters
+/// `tree` the tree to iterate on
+/// 
+/// # Return value
+/// A pointer to a new `MininipSectionIterator` over `tree`
+/// 
+/// # See
+/// `mininipDestroySectionIterator` to destroy the returned iterator
+#[no_mangle]
+unsafe extern fn mininipCreateSectionIterator(tree: *mut MininipTree) -> *mut MininipSectionIterator {
+    let tree = &mut *tree;
+    let iter = MininipSectionIterator {
+        iterator: tree.sections(),
+        last_allocated: std::ptr::null_mut(),
+    };
+    ffi_export(iter)
+}
+
+/// Destroys a `MininipSectionIterator`
+/// 
+/// # Parameters
+/// `ptr` a pointer to the `MininipSectionIterator` to destroy
+#[no_mangle]
+unsafe extern fn mininipDestroySectionIterator(ptr: *mut MininipSectionIterator) {
+    ffi_destroy(ptr);
+}
+
+/// A handle to a section yielded by a SectionIterator
+pub type MininipSection = crate::datas::tree::Section<'static>;
+
+/// Yields the next `MininipSection` from a `MininipSectionIterator` or a null pointer if iteration ended
+/// 
+/// # Parameters
+/// `iter` the `MininipSectionIterator` to yield from
+/// 
+/// # Return value
+/// A pointer to the `MininipSection` yielded from `iter`
+/// 
+/// # Note
+/// You do **not** own the pointer to that `MininipSection` so you do **not** have to free it and you must **not** assume that it will remain valid
+/// once you called this function once again
+/// 
+/// # See
+/// `mininipNextOwnedSection` if you want to own the pointer yielded though this is not recommended except when necessary
+#[no_mangle]
+unsafe extern fn mininipNextSection(iter: *mut MininipSectionIterator) -> *mut MininipSection {
+    let iterator = &mut *iter;
+    iterator.last_allocated = mininipNextOwnedSection(iter);
+    iterator.last_allocated
+}
+
+/// Yields the next `MininipSection` from a `MininipSectionIterator` or a null pointer if iteration ended
+/// 
+/// # Parameters
+/// `iter` the `MininipSectionIterator` to yield from
+/// 
+/// # Return value
+/// A pointer to the `MininipSection` yielded from `iter`
+/// 
+/// # Note
+/// You own the pointer to that `MininipSection` so you have to free it and you can assume that it will be kept valid once you called this function
+/// once again (except if you free it before)
+/// 
+/// # See
+/// `mininipNextSection` if you do not want to own the pointer yielded (this is the recommended way if owning the pointer is not necessary)
+#[no_mangle]
+unsafe extern fn mininipNextOwnedSection(iter: *mut MininipSectionIterator) -> *mut MininipSection {
+    let iter = &mut *iter;
+    if iter.last_allocated != std::ptr::null_mut() {
+        mininipDestroySection(iter.last_allocated);
+        iter.last_allocated = std::ptr::null_mut();
+    }
+
+    match iter.iterator.next() {
+        Some(val) => ffi_export(val),
+        None      => std::ptr::null_mut(),
+    }
+}
+
+/// Destroys a `MininipSection`
+/// 
+/// # Parameters
+/// `ptr` the handle to the `MininipSection` to free
+#[no_mangle]
+unsafe extern fn mininipDestroySection(ptr: *mut MininipSection) {
+    ffi_destroy(ptr);
+}
+
+/// Returns the name of a `MininipSection`
+/// 
+/// # Parameters
+/// `section` the section to return the name
+/// 
+/// `ptr` the pointer to assign to the name of `section`. Must be freed using `MininipDestroyString`
+/// 
+/// # Return value
+/// `MININIP_TRUE` in case of success
+/// 
+/// `MININIP_FALSE` in case of memory allocation error. In this case, `ptr` is not set and must **not** be freed
+#[no_mangle]
+unsafe extern fn mininipGetSectionName(section: *const MininipSection, ptr: *mut *mut c_char) -> MininipBoolValue {
+    let section = &*section;
+    match section.name() {
+        Some(name) => catch_unwind(|| {
+            *ptr = ffi_export_str(name);
+            MININIP_TRUE
+        })
+        .unwrap_or(MININIP_FALSE),
+        None => MININIP_TRUE,
+    }
+}
 
 // unit-tests
 #[cfg(test)]
