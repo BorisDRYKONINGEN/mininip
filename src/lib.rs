@@ -77,6 +77,15 @@ pub unsafe fn ffi_decode_str(ptr: *const c_char) -> Result<&'static str, std::st
     CStr::from_ptr(ptr).to_str()
 }
 
+/// Destroys any string allocated by Mininip
+/// 
+/// # Parameters
+/// `string` the string to free. Must be allocated by Mininip
+#[no_mangle]
+unsafe extern fn mininipDestroyString(string: *mut c_char) {
+    ffi_destroy_str(string);
+}
+
 /// Returns a new `Parser` which can be used through FFI
 /// . Returns a null pointer in case of error
 #[no_mangle]
@@ -448,6 +457,126 @@ unsafe extern fn mininipGetDataFromTree(tree: *mut MininipTree) -> *mut MininipD
     .unwrap_or(std::ptr::null_mut())
 }
 
+/// An iterator over the various sections of a `MininipTree`
+// marked as `'static` because the FFI interface is designed to be `'static`. Pointers will live as long as they are not freed
+pub struct MininipSectionIterator {
+    iterator: crate::datas::tree::SectionIterator<'static>,
+    last_allocated: *mut MininipSection,
+}
+
+/// Returns an iterator over the sections of a `MininipTree`
+/// 
+/// # Parameters
+/// `tree` the tree to iterate on
+/// 
+/// # Return value
+/// A pointer to a new `MininipSectionIterator` over `tree`
+/// 
+/// # See
+/// `mininipDestroySectionIterator` to destroy the returned iterator
+#[no_mangle]
+unsafe extern fn mininipCreateSectionIterator(tree: *mut MininipTree) -> *mut MininipSectionIterator {
+    let tree = &mut *tree;
+    let iter = MininipSectionIterator {
+        iterator: tree.sections(),
+        last_allocated: std::ptr::null_mut(),
+    };
+    ffi_export(iter)
+}
+
+/// Destroys a `MininipSectionIterator`
+/// 
+/// # Parameters
+/// `ptr` a pointer to the `MininipSectionIterator` to destroy
+#[no_mangle]
+unsafe extern fn mininipDestroySectionIterator(ptr: *mut MininipSectionIterator) {
+    ffi_destroy(ptr);
+}
+
+/// A handle to a section yielded by a SectionIterator
+pub type MininipSection = crate::datas::tree::Section<'static>;
+
+/// Yields the next `MininipSection` from a `MininipSectionIterator` or a null pointer if iteration ended
+/// 
+/// # Parameters
+/// `iter` the `MininipSectionIterator` to yield from
+/// 
+/// # Return value
+/// A pointer to the `MininipSection` yielded from `iter`
+/// 
+/// # Note
+/// You do **not** own the pointer to that `MininipSection` so you do **not** have to free it and you must **not** assume that it will remain valid
+/// once you called this function once again
+/// 
+/// # See
+/// `mininipNextOwnedSection` if you want to own the pointer yielded though this is not recommended except when necessary
+#[no_mangle]
+unsafe extern fn mininipNextSection(iter: *mut MininipSectionIterator) -> *mut MininipSection {
+    let iterator = &mut *iter;
+    iterator.last_allocated = mininipNextOwnedSection(iter);
+    iterator.last_allocated
+}
+
+/// Yields the next `MininipSection` from a `MininipSectionIterator` or a null pointer if iteration ended
+/// 
+/// # Parameters
+/// `iter` the `MininipSectionIterator` to yield from
+/// 
+/// # Return value
+/// A pointer to the `MininipSection` yielded from `iter`
+/// 
+/// # Note
+/// You own the pointer to that `MininipSection` so you have to free it and you can assume that it will be kept valid once you called this function
+/// once again (except if you free it before)
+/// 
+/// # See
+/// `mininipNextSection` if you do not want to own the pointer yielded (this is the recommended way if owning the pointer is not necessary)
+#[no_mangle]
+unsafe extern fn mininipNextOwnedSection(iter: *mut MininipSectionIterator) -> *mut MininipSection {
+    let iter = &mut *iter;
+    if iter.last_allocated != std::ptr::null_mut() {
+        mininipDestroySection(iter.last_allocated);
+        iter.last_allocated = std::ptr::null_mut();
+    }
+
+    match iter.iterator.next() {
+        Some(val) => ffi_export(val),
+        None      => std::ptr::null_mut(),
+    }
+}
+
+/// Destroys a `MininipSection`
+/// 
+/// # Parameters
+/// `ptr` the handle to the `MininipSection` to free
+#[no_mangle]
+unsafe extern fn mininipDestroySection(ptr: *mut MininipSection) {
+    ffi_destroy(ptr);
+}
+
+/// Returns the name of a `MininipSection`
+/// 
+/// # Parameters
+/// `section` the section to return the name
+/// 
+/// `ptr` the pointer to assign to the name of `section`. Must be freed using `MininipDestroyString`
+/// 
+/// # Return value
+/// `MININIP_TRUE` in case of success
+/// 
+/// `MININIP_FALSE` in case of memory allocation error. In this case, `ptr` is not set and must **not** be freed
+#[no_mangle]
+unsafe extern fn mininipGetSectionName(section: *const MininipSection, ptr: *mut *mut c_char) -> MininipBoolValue {
+    let section = &*section;
+    match section.name() {
+        Some(name) => catch_unwind(|| {
+            *ptr = ffi_export_str(name);
+            MININIP_TRUE
+        })
+        .unwrap_or(MININIP_FALSE),
+        None => MININIP_TRUE,
+    }
+}
 
 // unit-tests
 #[cfg(test)]
