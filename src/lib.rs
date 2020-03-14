@@ -464,6 +464,16 @@ pub struct MininipSectionIterator {
     last_allocated: *mut MininipSection,
 }
 
+impl Drop for MininipSectionIterator {
+    fn drop(&mut self) {
+        if self.last_allocated != std::ptr::null_mut() {
+            unsafe {
+                ffi_destroy(self.last_allocated);
+            }
+        }
+    }
+}
+
 /// Returns an iterator over the sections of a `MininipTree`
 /// 
 /// # Parameters
