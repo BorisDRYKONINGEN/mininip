@@ -457,6 +457,21 @@ unsafe extern fn mininipGetDataFromTree(tree: *mut MininipTree) -> *mut MininipD
     .unwrap_or(std::ptr::null_mut())
 }
 
+/// Borrows the `MininipData` used by a `MininipTree`
+/// 
+/// # Parameters
+/// `tree` the `MininipTree` to return data from
+/// 
+/// # Return value
+/// A pointer to that `MininipData`
+/// 
+/// # See
+/// `mininipGetDataFromTree` if you want to own the returned data and destroy `tree`
+#[no_mangle]
+unsafe extern fn mininipBorrowDataFromTree(tree: *mut MininipTree) -> *const MininipData {
+    (*tree).get_data() as *const MininipData
+}
+
 /// An iterator over the various sections of a `MininipTree`
 // marked as `'static` because the FFI interface is designed to be `'static`. Pointers will live as long as they are not freed
 pub struct MininipSectionIterator {
