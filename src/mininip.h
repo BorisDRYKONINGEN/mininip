@@ -156,6 +156,11 @@ typedef struct MininipSectionIterator MininipSectionIterator;
 typedef struct MininipSection MininipSection;
 
 /**
+ * \brief An iterator over the various keys of a MininipSection
+*/
+typedef struct MininipKeyIterator MininipKeyIterator;
+
+/**
  * \brief Creates a new handle to a parser
  * \returns a pointer to a new parser
  * \see MininipParser
@@ -288,6 +293,38 @@ MininipBoolValue mininipGetSectionName(const MininipSection* section, char** ptr
  * \param string the string to free
 */
 void mininipDestroyString(char* string);
+
+/**
+ * \brief Creates a new MininipKeyIterator from an existing MininipSection
+ * \param section the section to iterate over its keys
+ * \returns a new iterator over `section`. Must be destroyed using mininipDestroyKeyIterator. Returns a null pointer in case of memory allocation error
+*/
+MininipKeyIterator* mininipCreateKeyIterator(const MininipSection* section);
+
+/**
+ * \brief Destroys a MininipKeyIterator
+ * \param ptr a handle to the MininipKeyIterator to destroy
+*/
+void mininipDestroyKeyIterator(MininipKeyIterator* ptr);
+
+/**
+ * \brief Yeilds the next key name of a MininipKeyIterator
+ * \param iter the iterator to yield key names from
+ * \returns A key name
+ * \note You do **not** own the pointer to that string so you do **not** have to free it and you must **not** assume that it will remain valid once you called this function once again
+ * \see mininipNextOwnedKey if you want to own the pointer yielded though this is not recommended except when necessary
+*/
+char* mininipNextKey(MininipKeyIterator* iter);
+
+/**
+ * \brief Yields the next key name of a MininipKeyIterator
+ * \param iter the iterator to yield key names from
+ * \returns a key name
+ * \note You own the pointer to that string so you have to free it and you can still use it after calling this function once again
+ * \warn the returned value is a pointer on a *mutable* object in order to give you ownership of it to the calling code but altering its value will **not** change the key name
+ * \see mininipNextOwnedKey if you do not want to own the pointer yielded (the recommended way except when necessary)
+*/
+char* mininipNextOwnedKey(MininipKeyIterator* iter);
 
 
 #ifdef __cplusplus

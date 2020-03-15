@@ -97,9 +97,9 @@ bool showFileContent(MininipData** data) {
             goto destroyIterator;
 
         i = mininipNextSection(iter);
-        continue;
     }
 
+    mininipDestroySectionIterator(iter);
     *data = mininipGetDataFromTree(tree);
     return true;
 
@@ -121,8 +121,21 @@ bool showSectionContent(MininipSection* section) {
     } else
         fputs("; Global section\n", stdout);
 
+    MininipKeyIterator* iter = mininipCreateKeyIterator(section);
+    if (!iter)
+        return false;
 
-    // Unimplemented part
-    fputs("Unimplemented\n", stderr);
+    const char* i = mininipNextKey(iter);
+    while (i) {
+        printf("%s= ; Unimplemented\n", i);
+
+        i = mininipNextKey(iter);
+    }
+
+    mininipDestroyKeyIterator(iter);
+    return true;
+
+destroyIterator:
+    mininipDestroyKeyIterator(iter);
     return false;
 }
