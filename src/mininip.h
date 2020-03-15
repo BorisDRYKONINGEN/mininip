@@ -263,7 +263,7 @@ void mininipDestroySectionIterator(MininipSectionIterator* ptr);
  * \note You do **not** own the pointer to that MininipSection so you do **not** have to free it and you must **not** assume that it will remain valid once you called this function once again
  * \see mininipNextOwnedSection if you want to own the pointer yielded though this is not recommended except when necessary
 */
-MininipSection* mininipNextSection(MininipSectionIterator* iter);
+const MininipSection* mininipNextSection(MininipSectionIterator* iter);
 
 /**
  * \brief Yields the next MininipSection from a MininipSectionIterator or a null pointer if iteration ended
@@ -324,7 +324,7 @@ char* mininipNextKey(MininipKeyIterator* iter);
  * \warn the returned value is a pointer on a *mutable* object in order to give you ownership of it to the calling code but altering its value will **not** change the key name
  * \see mininipNextOwnedKey if you do not want to own the pointer yielded (the recommended way except when necessary)
 */
-char* mininipNextOwnedKey(MininipKeyIterator* iter);
+const char* mininipNextOwnedKey(MininipKeyIterator* iter);
 
 
 #ifdef __cplusplus
