@@ -521,7 +521,7 @@ pub type MininipSection = crate::datas::tree::Section<'static>;
 /// # See
 /// `mininipNextOwnedSection` if you want to own the pointer yielded though this is not recommended except when necessary
 #[no_mangle]
-unsafe extern fn mininipNextSection(iter: *mut MininipSectionIterator) -> *mut MininipSection {
+unsafe extern fn mininipNextSection(iter: *mut MininipSectionIterator) -> *const MininipSection {
     let iterator = &mut *iter;
     iterator.last_allocated = mininipNextOwnedSection(iter);
     iterator.last_allocated
@@ -569,7 +569,8 @@ unsafe extern fn mininipDestroySection(ptr: *mut MininipSection) {
 /// # Parameters
 /// `section` the section to return the name
 /// 
-/// `ptr` the pointer to assign to the name of `section`. Must be freed using `MininipDestroyString`
+/// `ptr` the pointer to assign to the name of `section`. Must be freed using `MininipDestroyString`. Will be set to a null pointer if the section
+/// is anonymous (global)
 /// 
 /// # Return value
 /// `MININIP_TRUE` in case of success
@@ -584,9 +585,107 @@ unsafe extern fn mininipGetSectionName(section: *const MininipSection, ptr: *mut
             MININIP_TRUE
         })
         .unwrap_or(MININIP_FALSE),
-        None => MININIP_TRUE,
+
+        None => {
+            *ptr = std::ptr::null_mut();
+            MININIP_TRUE
+        },
     }
 }
+
+/// An iterator over the different keys of a MininipSection
+pub struct MininipKeyIterator {
+    iterator: crate::datas::tree::KeyIterator<'static>,
+    last_allocated: *mut c_char,
+}
+
+impl Drop for MininipKeyIterator {
+    fn drop(&mut self) {
+        if self.last_allocated != std::ptr::null_mut() {
+            unsafe {
+                ffi_destroy_str(self.last_allocated);
+            }
+        }
+    }
+}
+
+/// Creates a new `MininipKeyIterator` from an existing `MininipSection`
+/// 
+/// # Parameters
+/// `section` the section to iterate over its keys
+/// 
+/// # Return value
+/// A new iterator over `section`. Must be destroyed using `mininipDestroyKeyIterator`. Returns a null pointer in case of memory allocation error
+#[no_mangle]
+unsafe extern fn mininipCreateKeyIterator(section: *const MininipSection) -> *mut MininipKeyIterator {
+    let iter = MininipKeyIterator {
+        iterator: (*section).keys(),
+        last_allocated: std::ptr::null_mut(),
+    };
+    ffi_export(iter)
+}
+
+/// Destroys a `MininipKeyIterator`
+/// 
+/// # Parameters
+/// `ptr` a handle to the `MininipKeyIterator` to destroy
+#[no_mangle]
+unsafe extern fn mininipDestroyKeyIterator(ptr: *mut MininipKeyIterator) {
+    ffi_destroy(ptr);
+}
+
+/// Yields the next key name of a `MininipKeyIterator`
+/// 
+/// # Parameters
+/// `iter` the iterator to yield key names from
+/// 
+/// # Return value
+/// A key name
+/// 
+/// # Note
+/// You do **not** own the pointer to that string so you do **not** have to free it and you must **not** assume that it will remain valid once you
+/// called this function once again
+/// 
+/// # See
+/// `mininipNextOwnedKey` if you want to own the pointer yielded though this is not recommended except when necessary
+#[no_mangle]
+unsafe extern fn mininipNextKey(iter: *mut MininipKeyIterator) -> *const c_char {
+    let iterator = &mut *iter;
+    iterator.last_allocated = mininipNextOwnedKey(iter);
+    iterator.last_allocated
+}
+
+/// Yields the next key name of a `MininipKeyIterator`
+/// 
+/// # Parameters
+/// `iter` the iterator to yield key names from
+/// 
+/// # Return value
+/// A key name
+/// 
+/// # Note
+/// You own the pointer to that string so you have to free it and you can still use it after calling this function once again
+/// 
+/// # Warning
+/// The returned value is a pointer on a *mutable* object in order to give ownership of it to the calling code but altering its value will **not**
+/// change the key name
+/// 
+/// # See
+/// `mininipNextOwnedKey` if you do not want to own the pointer yielded (the recommended way except when necessary)
+#[no_mangle]
+unsafe extern fn mininipNextOwnedKey(iter: *mut MininipKeyIterator) -> *mut c_char {
+    let iterator = &mut *iter;
+    if iterator.last_allocated != std::ptr::null_mut() {
+        ffi_destroy_str(iterator.last_allocated);
+        iterator.last_allocated = std::ptr::null_mut();
+    }
+
+    match iterator.iterator.next() {
+        Some(val) => ffi_export_str(val.name()),
+        None      => std::ptr::null_mut(),
+    }
+}
+
 
 // unit-tests
 #[cfg(test)]
