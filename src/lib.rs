@@ -521,7 +521,7 @@ pub type MininipSection = crate::datas::tree::Section<'static>;
 /// # See
 /// `mininipNextOwnedSection` if you want to own the pointer yielded though this is not recommended except when necessary
 #[no_mangle]
-unsafe extern fn mininipNextSection(iter: *mut MininipSectionIterator) -> *mut MininipSection {
+unsafe extern fn mininipNextSection(iter: *mut MininipSectionIterator) -> *const MininipSection {
     let iterator = &mut *iter;
     iterator.last_allocated = mininipNextOwnedSection(iter);
     iterator.last_allocated
@@ -649,7 +649,7 @@ unsafe extern fn mininipDestroyKeyIterator(ptr: *mut MininipKeyIterator) {
 /// # See
 /// `mininipNextOwnedKey` if you want to own the pointer yielded though this is not recommended except when necessary
 #[no_mangle]
-unsafe extern fn mininipNextKey(iter: *mut MininipKeyIterator) -> *mut c_char {
+unsafe extern fn mininipNextKey(iter: *mut MininipKeyIterator) -> *const c_char {
     let iterator = &mut *iter;
     iterator.last_allocated = mininipNextOwnedKey(iter);
     iterator.last_allocated
