@@ -584,7 +584,11 @@ unsafe extern fn mininipGetSectionName(section: *const MininipSection, ptr: *mut
             MININIP_TRUE
         })
         .unwrap_or(MININIP_FALSE),
-        None => MININIP_TRUE,
+
+        None => {
+            *ptr = std::ptr::null_mut();
+            MININIP_TRUE
+        },
     }
 }
 
