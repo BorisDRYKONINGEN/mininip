@@ -243,6 +243,14 @@ void mininipDestroyTree(MininipTree* tree);
 MininipData* mininipGetDataFromTree(MininipTree* tree);
 
 /**
+ * \brief Borrows the MininipData used by a MininipTree
+ * \param tree the MininipTree to return data from
+ * \returns a pointer to that MininipData
+ * \see mininipGetDataFromTree if you want to own the returned data and destroy `tree`
+*/
+const MininipData* mininipBorrowDataFromTree(MininipTree* tree);
+
+/**
  * \brief Returns an iterator over the sections of a MininipTree
  * \param tree the MininipTree to iterate on
  * \returns a pointer to a new MininipSectionIterator over `tree`

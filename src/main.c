@@ -10,10 +10,11 @@
 bool showFileContent(MininipData** data);
 /**
  * \brief Shows to the user the content of an MininipSection and its name
+ * \param tree the tree where `section` comes from
  * \param section the section to show the content
  * \returns `true` in case of success, `false` otherwise
 */
-bool showSectionContent(MininipSection* section);
+bool showSectionContent(const MininipTree* tree, const MininipSection* section);
 
 int main(int argc, const char* const* argv) {
     MininipParser* parser = mininipNewParser();
@@ -91,9 +92,9 @@ bool showFileContent(MininipData** data) {
     if (!iter)
         goto destroyTree;
 
-    MininipSection* i = mininipNextSection(iter);
+    const MininipSection* i = mininipNextSection(iter);
     while (i) {
-        if (!showSectionContent(i))
+        if (!showSectionContent(tree, i))
             goto destroyIterator;
 
         i = mininipNextSection(iter);
@@ -110,32 +111,68 @@ destroyTree:
     return false;
 }
 
-bool showSectionContent(MininipSection* section) {
+bool showSectionContent(const MininipTree* tree, const MininipSection* section) {
     char* name = NULL;
     if (!mininipGetSectionName(section, &name))
         return false;
 
-    if (name) {
+    if (name)
         printf("[%s]\n", name);
-        mininipDestroyString(name);
-    } else
+    else
         fputs("; Global section\n", stdout);
 
     MininipKeyIterator* iter = mininipCreateKeyIterator(section);
     if (!iter)
-        return false;
+        goto destroyName;
 
+    const MininipData* data = mininipBorrowDataFromTree(tree);
     const char* i = mininipNextKey(iter);
     while (i) {
-        printf("%s= ; Unimplemented\n", i);
+        MininipEntry value;
+        if (!mininipGetEntry(data, name, i, &value)) {
+            fputs("Cannot get a valid entry\n", stderr);
+            goto destroyName;
+        }
+
+        printf("%s=", i);
+        switch (value.valueType) {
+        case MININIP_TYPE_RAW:
+            printf("%s\n", value.value.raw.ptr);
+            break;
+
+        case MININIP_TYPE_STR:
+            printf("\"%s\"\n", value.value.string.ptr);
+            break;
+
+        case MININIP_TYPE_INT:
+            printf("%ld\n", (long int) value.value.integer);
+            break;
+
+        case MININIP_TYPE_FLOAT:
+            printf("%lf\n", (double) value.value.floating);
+            break;
+
+        case MININIP_TYPE_BOOL:
+            if (value.value.boolean)
+                fputs("y\n", stdout);
+            else
+                fputs("n\n", stdout);
+            break;
+        }
+        mininipDestroyEntry(&value);
 
         i = mininipNextKey(iter);
     }
 
+    if (name)
+        mininipDestroyString(name);
     mininipDestroyKeyIterator(iter);
     return true;
 
 destroyIterator:
     mininipDestroyKeyIterator(iter);
+
+destroyName:
+    mininipDestroyString(name);
     return false;
 }
