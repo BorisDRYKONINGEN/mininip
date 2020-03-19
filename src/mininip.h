@@ -214,7 +214,7 @@ MininipError mininipParseFile(const char* path, MininipData** data);
  * - A variable not found
  * - An allocation or conversion error
 */
-MininipBoolValue mininipGetEntry(MininipData* data, const char* section, const char* key, MininipEntry* entry);
+MininipBoolValue mininipGetEntry(const MininipData* data, const char* section, const char* key, MininipEntry* entry);
 
 /**
  * \brief Destroys a MininipEntry by freeing all the ressources
@@ -248,7 +248,7 @@ MininipData* mininipGetDataFromTree(MininipTree* tree);
  * \returns a pointer to that MininipData
  * \see mininipGetDataFromTree if you want to own the returned data and destroy `tree`
 */
-const MininipData* mininipBorrowDataFromTree(MininipTree* tree);
+const MininipData* mininipBorrowDataFromTree(const MininipTree* tree);
 
 /**
  * \brief Returns an iterator over the sections of a MininipTree
