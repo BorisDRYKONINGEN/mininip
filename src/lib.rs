@@ -361,7 +361,7 @@ const MININIP_FALSE: c_int = 0;
 /// # Return value
 /// `true` if the entry exists, `false` otherwise or in case of error (including either any runtime error or an invalid name for section or key)
 #[no_mangle]
-unsafe extern fn mininipGetEntry(data: *mut MininipData, section: *const c_char, key: *const c_char, entry: *mut MininipEntry) -> MininipBoolValue {
+unsafe extern fn mininipGetEntry(data: *const MininipData, section: *const c_char, key: *const c_char, entry: *mut MininipEntry) -> MininipBoolValue {
     catch_unwind(|| {
         let section = if section == std::ptr::null() {
             None
@@ -386,7 +386,7 @@ unsafe extern fn mininipGetEntry(data: *mut MininipData, section: *const c_char,
         }
 
         let ident = Identifier::new(section, key);
-        let data = &mut *data;
+        let data = &*data;
         match data.get(&ident) {
             Some(val) => {
                 *entry = MininipEntry::from(val.clone());
@@ -468,7 +468,7 @@ unsafe extern fn mininipGetDataFromTree(tree: *mut MininipTree) -> *mut MininipD
 /// # See
 /// `mininipGetDataFromTree` if you want to own the returned data and destroy `tree`
 #[no_mangle]
-unsafe extern fn mininipBorrowDataFromTree(tree: *mut MininipTree) -> *const MininipData {
+unsafe extern fn mininipBorrowDataFromTree(tree: *const MininipTree) -> *const MininipData {
     (*tree).get_data() as *const MininipData
 }
 
